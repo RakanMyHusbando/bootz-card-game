@@ -18,7 +18,7 @@ export const execute = async (db,query,params=[]) => {
 export const createCard = async (db,cardMap) => {
     for(const key in cardMap)
         if(cardMap[key] == undefined && cardMap[key] == null)
-            throw new Error(`Missing key: ${key}`)  
+            return new Error(`Missing key: ${key}`)  
         
     return execute(db,
         `INSERT INTO Card (

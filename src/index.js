@@ -3,12 +3,25 @@ import fs from "node:fs"
 import { execute, createCard } from "./sqlite.js"
 
 try {
-    const db = new sqlite3.Database("datebase.db")
-    const f = fs.readFileSync("src/cards.json")
+    let db = new sqlite3.Database("data.db")
 
-    JSON.parse(f).forEach(card => {
-        createCard(db, card)
+    // create table
+    const schemaFile = fs.readFileSync("src/schema.sql").toString()
+    const table = schemaFile.replaceAll("\n","").split(";")
+    table.pop()
+    table.forEach(async query => {
+        await execute(db, query)
+        console.log(`Created table: ${query.split(" ")[5]}`)
     })
+    
+    db.close()
+    db = new sqlite3.Database("data.db")
+
+    // create cards
+    const cardsFile = fs.readFileSync("src/cards.json")
+    JSON.parse(cardsFile).forEach(card => {
+        createCard(db, card)
+    })    
 
     db.close()
 } catch (e) {

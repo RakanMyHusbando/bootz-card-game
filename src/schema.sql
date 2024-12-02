@@ -10,8 +10,7 @@ create table if not exists Card (
     rarity integer not null,
     attack integer not null,
     defense integer not null,
-    health integer not null,
-    foreign key(card_type) references CardType(id)
+    health integer not null
 );
 create table if not exists UserCard (
     user_id integer not null,
