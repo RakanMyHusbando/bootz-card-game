@@ -4,7 +4,7 @@ import { execute, createCard } from "./sqlite.js"
 
 try {
     const db = new sqlite3.Database("datebase.db")
-    const f = fs.readFileSync("cards.json")
+    const f = fs.readFileSync("src/cards.json")
 
     JSON.parse(f).forEach(card => {
         createCard(db, card)
@@ -13,4 +13,4 @@ try {
     db.close()
 } catch (e) {
     console.error(e)
-}d
+}
