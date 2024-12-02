@@ -1,0 +1,20 @@
+[
+    {
+        "title": "Card title 0",
+        "description": "Card description 0",
+        "type": "Card type 0",
+        "rarity": 0,
+        "attack": 0,
+        "defense": 0,
+        "health": 100
+    },
+    {
+        "title": "Card title 1",
+        "description": "Card description 1",
+        "type": "Card type 1",
+        "rarity": 4,
+        "attack": 1,
+        "defense": 2,
+        "health": 10
+    }
+]
