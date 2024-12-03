@@ -9,7 +9,14 @@ export class SQLiteHandler {
         this.dbFile = dbFile
     }
 
-    #exectue = async (query,params=[]) => {
+    /**
+     * Executes a SQL query.
+     * @param {string} query - The SQL query to execute.
+     * @param {any[]} [params=[]] - An optional array of parameters to bind to the query.
+     * @returns {Promise<any[]>} - Returns a promise that resolves to an array of rows returned by the query.
+     * @private
+     */
+    #execute = async (query,params=[]) => {
         const db = new sqlite3.Database(this.dbFile)
         return new Promise((reject,resolve)=>{
             if (params.length>0)
@@ -30,7 +37,7 @@ export class SQLiteHandler {
         let query = schemaContent.replaceAll("\n","").split(";")
         query.pop()
         query.forEach(async query=>{
-            await this.#exectue(query).catch(err=>errors.push(err))
+            await this.#execute(query).catch(err=>errors.push(err))
         })   
         return errors.length>0 ? new Error("Error while executing schema.") : null
     }
@@ -44,7 +51,7 @@ export class SQLiteHandler {
      */
     insert = async (table,columns,values) => {
         let query = `INSERT INTO ${table} (${columns.join(",")}) VALUES (${values.map(v=>"?").join(",")})`
-        return this.#exectue(query,values).catch(err=>console.error(err))
+        return this.#execute(query,values).catch(err=>console.error(err))
     }
 
 
@@ -59,7 +66,7 @@ export class SQLiteHandler {
         let query = `SELECT ${columns.join(",")} FROM ${table}`
         if(where)
             query += ` WHERE ${where}`
-        return this.#exectue(query)
+        return this.#execute(query)
     }
 
     /**
@@ -74,7 +81,7 @@ export class SQLiteHandler {
         let query = `UPDATE ${table} SET ${columns.map((c,i)=>`${c} = ?`).join(",")}`
         if(where)
             query += ` WHERE ${where}`
-        return this.#exectue(query,values)
+        return this.#execute(query,values)
     }
 
     /**
@@ -87,7 +94,7 @@ export class SQLiteHandler {
         let query = `DELETE FROM ${table}`
         if(where)
             query += ` WHERE ${where}`
-        return this.#exectue(query)
+        return this.#execute(query)
     }
 }
 
