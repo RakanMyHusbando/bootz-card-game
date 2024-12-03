@@ -1,6 +1,10 @@
 import sqlite3 from 'sqlite3'
 
 export class SQLiteHandler {
+    /**
+     * Creates an instance of SQLiteHandler.
+     * @param {string} dbFile - The path to the SQLite database file.
+     */
     constructor(dbFile) {
         this.dbFile = dbFile
     }
@@ -84,5 +88,58 @@ export class SQLiteHandler {
         if(where)
             query += ` WHERE ${where}`
         return this.#exectue(query)
+    }
+}
+
+
+/**
+ * Represents a Card handler that extends SQLiteHandler.
+ * Provides methods to select cards from the database.
+ */
+export class Card extends SQLiteHandler {
+    /**
+     * Creates an instance of Card.
+     * @param {string} dbFile - The path to the SQLite database file.
+     */
+    constructor(dbFile) {
+        super(dbFile);
+    }
+
+    /**
+     * Selects a random card from the database.
+     * @returns {Promise<Object>} A promise that resolves to a random card object.
+     */
+    SelectRandomCard = async () => {
+           // TODO: better randomization
+           return his.select("card",["*"])
+           .then(rows=>rows[Math.floor(Math.random()*rows.length)])
+    }
+
+    /**
+     * Selects cards from the database by type.
+     * @param {string} type - The type of the card.
+     * @returns {Promise<Array<Object>>} A promise that resolves to an array of card objects of the specified type.
+     */
+    SelectCardByType = async (type) => {
+        return this.select("card",["*"],`type = "${type}"`)
+    }
+
+    /**
+     * Selects cards from the database by type and value.
+     * @param {string} type - The type of the card.
+     * @param {string|number} value - The value of the card.
+     * @returns {Promise<Array<Object>>} A promise that resolves to an array of card objects that match the specified type and value.
+     */
+    SelectCardByTypeAndValue = async (type, value) => {
+        return this.select("card",["*"],`type = "${type}" AND value = "${value}"`)
+    }
+
+    /**
+     * Selects cards from the database by value.
+     * @param {string|number} value - The value of the card.
+     * @returns {Promise<Array<Object>>} A promise that resolves to an array of card objects that match the specified value.
+     */
+    SelectCardByValue = async (value) => {
+        return this.select("card",["*"],`value = "${value}"`)
     }
 }
