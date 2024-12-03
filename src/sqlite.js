@@ -1,10 +1,8 @@
 import sqlite3 from 'sqlite3'
 
-export class dbHandler {
+export class SQLiteHandler {
     constructor(dbFile) {
         this.dbFile = dbFile
-        const db = new sqlite3.Database(this.dbFile)
-        db.close()
     }
 
     #exectue = async (query,params=[]) => {

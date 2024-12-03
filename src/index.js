@@ -1,8 +1,9 @@
 import fs from "node:fs"
-import { dbHandler } from "./sqlite.js"
+import { SQLiteHandler } from "./sqlite.js"
 
-const db = new dbHandler("data.db")
+const db = new SQLiteHandler("data.db")
 
+// executing schema.sql to create tables
 await db.executeSchema(fs.readFileSync("src/schema.sql").toString())
     .catch(err=>console.error(err))
 
@@ -20,4 +21,5 @@ for (const card of cardJson) {
     db.insert("card",keys,values)
         .catch(err=>console.error(err+"for card: "+card))
 }
+
 
