@@ -1,3 +1,5 @@
+import sqlite3 from 'sqlite3'
+
 export const execute = async (db,query,params=[]) => {
     if (params.length>0){
         return new Promise((reject,resolve)=>{
@@ -13,6 +15,22 @@ export const execute = async (db,query,params=[]) => {
             resolve(err)
         })
     })
+}
+
+const connectAndExecute = async (dbFile,query,params=[]) => {
+    const db = new sqlite3.Database(dbFile)
+    const result = await execute(db,query,params)
+        .then(res=>result=res)
+        .catch(err=>null)
+    db.close()
+    console.log(result)
+    return result
+}
+
+class dbHandler {
+    constructor(dbFile) {
+        this.dbFile = dbFile
+    }
 }
 
 export const createCard = async (db,cardMap) => {
