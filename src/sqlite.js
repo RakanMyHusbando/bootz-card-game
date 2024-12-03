@@ -150,3 +150,4 @@ export class Card extends SQLiteHandler {
         return this.select("card",["*"],`value = "${value}"`)
     }
 }
+
