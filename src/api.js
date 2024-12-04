@@ -72,12 +72,7 @@ export class CardHandler extends Storage {
                 return formApiResponse(res, 500, null, "Missing required fields")
         }
         await this.insert("card", keys, values)
-            .then(data =>{ 
-                if (data.errno) 
-                    throw new Error(data.message)
-                else 
-                    formApiResponse(res, 200, data, "Card created")
-            })
+            .then(data =>formApiResponse(res, 200, data, "Card created"))
             .catch(err => formApiResponse(res, 500, null, err))
     }
 

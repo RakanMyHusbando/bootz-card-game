@@ -18,13 +18,17 @@ export class Storage {
      */
     #execute = async (query,params=[]) => {
         const db = new sqlite3.Database(this.dbFile)
-        return new Promise((reject,resolve)=>{
+        const result = new Promise((reject,resolve)=>{
             if (params.length>0)
                 db.all(query,params,(err,rows)=>err ? reject(err) : resolve(rows))
             else
                 db.all(query,(err,rows)=>err ? reject(err) : resolve(rows))
-            db.close()
         })
+        db.close()
+        if (result.errno)
+            return new Error(result.message)
+        else 
+            return result
     }
 
     /**
@@ -37,7 +41,8 @@ export class Storage {
         let query = schemaContent.replaceAll("\n","").split(";")
         query.pop()
         query.forEach(async query=>{
-            await this.#execute(query).catch(err=>err)
+            await this.#execute(query)
+                .catch(err=>errors.push(err))
         })   
         return errors.length>0 ? new Error("Error while executing schema.") : null
     }
