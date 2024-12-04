@@ -8,8 +8,7 @@ create table if not exists card (
     title text unique not null,
     description text not null,
     type text not null,
-    max_amount integer not null,
-    remaining_amount integer not null,
+    rarity integer not null,
     attack integer not null,
     defense integer not null,
     health integer not null

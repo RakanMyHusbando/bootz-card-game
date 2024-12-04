@@ -20,16 +20,15 @@ export class CardHandler extends Storage {
         super(dbFile)
     }
 
+    #keys = ["title","description","type","rarity","attack","defense","health"]
+
     #storageToRespData = (storageData) => {
         return {
             id: storageData.id,
             title: storageData.title,
             description: storageData.description,
             type: storageData.type,
-            amount: {
-                max: storageData.max_amount,
-                remaining: storageData.remaining_amount
-            },
+            rarity: storageData.rarity,
             attack: storageData.attack,
             defense: storageData.defense,
             health: storageData.health
@@ -45,9 +44,7 @@ export class CardHandler extends Storage {
      * @param {string} req.body.title - The title of the card.
      * @param {string} req.body.description - The description of the card.
      * @param {string} req.body.type - The type of the card.
-     * @param {Object} req.body.amount - The amount of the card.
-     * @param {number} req.body.amount.max - The max amount of the card.
-     * @param {number} req.body.amount.remaining - The remaining amount of the card.
+     * @param {Object} req.body.rarity - The rarity of the card.
      * @param {number} req.body.attack - The attack value of the card.
      * @param {number} req.body.defense - The defense value of the card.
      * @param {number} req.body.health - The health value of the card.
@@ -55,17 +52,14 @@ export class CardHandler extends Storage {
      * @returns {Promise<void>}
      */
     handlePost = async (req, res) => {
-        const keys = ["title","description","type","max_amount","remaining_amount","attack","defense","health"]
         const values = []
-        for (const key of keys) {
-            if (key.includes("amount") && req.body["amount"][key.split("_")[0]]) 
-                values.push(req.body["amount"][key.split("_")[0]])
-            else if (req.body[key]) 
+        for (const key of this.#keys) {
+            if (req.body[key]) 
                 values.push(req.body[key])
             else 
                 return formApiResponse(res, 500, null, "Missing required fields")
         }
-        await this.insert("card", keys, values)
+        await this.insert("card", this.#keys, values)
             .then(data => formApiResponse(res, 200, data, "Card created"))
             .catch(err => formApiResponse(res, 500, null, err))
     }
@@ -83,6 +77,8 @@ export class CardHandler extends Storage {
                 storageDataLst.forEach(storageData => {
                     data.push(this.#storageToRespData(storageData))
                 })
+                if (data.length === 0) 
+                    return formApiResponse(res, 404, null, "No cards found")
                 formApiResponse(res, 200, data, "Card retrieved")
             })
             .catch(err => formApiResponse(res, 500, null, err))
@@ -103,6 +99,8 @@ export class CardHandler extends Storage {
                 storageDataLst.forEach(storageData => {
                     data.push(this.#storageToRespData(storageData))
                 })
+                if(data.length === 0)
+                    return formApiResponse(res, 404, null, "Card not found")
                 formApiResponse(res, 200, data, "Card retrieved")
             })
             .catch(err => formApiResponse(res, 500, null, err))
@@ -118,9 +116,7 @@ export class CardHandler extends Storage {
      * @param {string} [req.body.title] - The title of the card.
      * @param {string} [req.body.description] - The description of the card.
      * @param {string} [req.body.type] - The type of the card.
-     * @param {Object} [req.body.amount] - The amount of the card.
-     * @param {number} [req.body.amount.max] - The max amount of the card.
-     * @param {number} [req.body.amount.remaining] - The remaining amount of the card.
+     * @param {Object} [req.body.rarity] - The rarity of the card.
      * @param {number} [req.body.attack] - The attack value of the card.
      * @param {number} [req.body.defense] - The defense value of the card.
      * @param {number} [req.body.health] - The health value of the card.
@@ -131,17 +127,13 @@ export class CardHandler extends Storage {
         const keys = ["title","description","type","max_amount","remaining_amount","attack","defense","health"]
         const columns = []
         const values = []
-        for (const key of keys) {
-            if (key.includes("amount") && req.body["amount"] && req.body["amount"][key.split("_")[0]]) {
-                values.push(req.body["amount"][key.split("_")[0]])
-                columns.push(key)
-            } else if (req.body[key]) {
+        for (const key of keys) 
+            if (req.body[key]) {
                 values.push(req.body[key])
                 columns.push(key)
             }
-        }
         await this.update("card", columns, values, {id:parseInt(req.params.id)})
-            .then(data => formApiResponse(res, 200, data, "Card updated"))
+            .then(data => formApiResponse(res, 200, null, "Card updated"))
             .catch(err => formApiResponse(res, 500, null, err))
     }
 
@@ -187,7 +179,7 @@ export class UserHandler extends Storage {
                 return formApiResponse(res, 500, null, "Missing required fields")
         }
         await this.insert("user", keys, values)
-            .then(data => formApiResponse(res, 200, data, "User created"))
+            .then(data => formApiResponse(res, 200, null, "User created"))
             .catch(err => formApiResponse(res, 500, null, err))
     }
 
@@ -197,12 +189,16 @@ export class UserHandler extends Storage {
      * @param {Object} res - The response object.
      * @returns {Promise<void>}
      */
-    handleGetAll = async (req,res) => {
-        // TODO: add user cards
-        await this.select("user",["*"])
-            .then(data => formApiResponse(res, 200, data, "User retrieved"))
-            .catch(err => formApiResponse(res, 500, null, err))
-    }
+    handleGetAll = async (req,res) => await this.select("user",["*"])
+        .then(async data => {
+            if(data.length > 0){
+                for (const user of data) 
+                    user.cards = await this.#getCards(user.id).catch(()=>[])
+                formApiResponse(res, 200, data, "User retrieved")
+            } else
+                formApiResponse(res, 404, null, "No user found")
+        })
+        .catch(err => formApiResponse(res, 500, null, err))
 
     /**
      * Handle GET request to get a user by id.
@@ -212,12 +208,16 @@ export class UserHandler extends Storage {
      * @param {Object} res - The response object.
      * @returns {Promise<void>}
      **/
-    handleGetById = async (req,res) => {
-        // TODO: add user cards
-        await this.select("user",["*"],{id:parseInt(req.params.id)})
-            .then(data => formApiResponse(res, 200, data, "User retrieved"))
-            .catch(err => formApiResponse(res, 500, null, err))
-    }
+    handleGetById = async (req,res) => await this.select("user",["*"],{id:parseInt(req.params.id)})
+        .then(async data => {
+            if(data.length > 0){
+                for (const user of data) 
+                    user.cards = await this.#getCards(user.id).catch(()=>[])
+                formApiResponse(res, 200, data, "User retrieved")
+            } else
+                formApiResponse(res, 404, null, "No user found")
+        })
+        .catch(err => formApiResponse(res, 500, null, err))
 
     /**
      * Handle PATCH request to update a user by id.
@@ -241,10 +241,9 @@ export class UserHandler extends Storage {
             }
         }
         await this.update("user", columns, values, {id:parseInt(req.params.id)})
-            .then(data => formApiResponse(res, 200, data, "User updated"))
+            .then(data => formApiResponse(res, 200, null, "User updated"))
             .catch(err => formApiResponse(res, 500, null, err))
     }
-
 
     /**
      * Handle DELETE request to delete a user by id.
@@ -254,10 +253,82 @@ export class UserHandler extends Storage {
      * @param {Object} res - The response object.
      * @returns {Promise<void>}
      */
-    handleDelete = async (req,res) => {
-        // TODO: delete user cards
-        await this.delete("user", {id:parseInt(req.params.id)})
-            .then(data => formApiResponse(res, 200, data, "User deleted"))
-            .catch(err => formApiResponse(res, 500, null, err))
+    handleDelete = async (req,res) => await this.delete("user_card",{user_id:parseInt(req.params.id)})
+        .then(async ()=> await this.delete("user", {id:parseInt(req.params.id)}))
+        .then(data => formApiResponse(res, 200, null, "User and user_card deleted"))
+        .catch(err => formApiResponse(res, 500, null, err))
+
+    /**
+     * Handle POST request to add a card to a user's collection.
+     * @param {Object} req - The request object.
+     * @param {Object} req.params - The request parameters.
+     * @param {string} req.params.userId - The id of the user.
+     * @param {string} req.params.cardId - The id of the card.
+     * @param {Object} res
+     * @returns {Promise<void>} 
+     */
+    handlePostCard = async (req, res) => {
+        const userCard = await this.#getCard(parseInt(req.params.userId),parseInt(req.params.cardId))
+            .then(data=>data.length > 0 ? data[0].own_amount : false)
+            .catch(()=>false)
+        if(userCard != false)
+            await this.#updateCards(parseInt(req.params.userId),parseInt(req.params.cardId),userCard+1)
+                .then(data => formApiResponse(res, 200, null, "User card updated"))
+                .catch(err => formApiResponse(res, 500, null, err))
+        else 
+            await this.insert("user_card",["user_id","card_id","own_amount"],[parseInt(req.params.userId),parseInt(req.params.cardId),1])
+                .then(data => formApiResponse(res, 200, null, "User card created"))
+                .catch(err => formApiResponse(res, 500, null, err))
     }
+    /**
+     * Handle DELETE request to get all cards for a user.
+     * @param {Object} req - The request object.
+     * @param {Object} req.params - The request parameters.
+     * @param {string} req.params.userId - The id of the user.
+     * @param {Object} req.params.cardId - The id of the card.
+     * @param {Object} res - The response object.
+     * @returns {Promise<void>} 
+     */
+    handleDeleteCard = async (req,res) => await this.#getCard(parseInt(req.params.userId),parseInt(req.params.cardId))
+        .then(async data => {
+            if (data[0].own_amount > 1) 
+                await this.#updateCards(parseInt(req.params.userId),parseInt(req.params.cardId),data[0].own_amount-1)
+                    .then(data => formApiResponse(res, 200, null, "User card updated"))
+            else
+                await this.delete("user_card",{user_id:parseInt(req.params.userId),card_id:parseInt(req.params.cardId)})
+                    .then(data => formApiResponse(res, 200, null, "User card deleted"))
+        })
+        .catch(err => formApiResponse(res, 500, null, err))
+
+    /**
+     * Get all cards for a user.
+     * @param {number} userId - The id of the user.
+     * @returns {Promise<any[]|Error>} - Returns a promise that resolves to an array of rows returned by the query, or an error object if the query fails.
+     * @private
+     **/
+    #getCards = async (userId) => await this.select("user_card",["*"],{user_id:userId})
+
+    /**
+     * Get a card for a user by card id.
+     * @param {number} userId 
+     * @param {number} cardId 
+     * @returns {Promise<any[]|Error>} - Returns a promise that resolves to an array of rows returned by the query, or an error object if the query fails.
+     * @private
+     */
+    #getCard = async (userId, cardId) => await this.select("user_card",["*"],{user_id:userId, card_id:cardId})
+
+    /**
+     * Update the amount of a card owned by a user.
+     * @param {number} userId - The id of the user.
+     * @param {number} cardId - The id of the card.
+     * @param {number} ownAmount - The amount of the card owned by the user.
+     * @returns {Promise<any[]|Error>} - Returns a promise that resolves to an array of rows returned by the query, or an error object if the query fails.
+     * @private
+     * */
+    #updateCards = async (userId, cardId, ownAmount) => await this.update(
+        "user_card", 
+        ["own_amount"], 
+        [ownAmount], 
+        {user_id:userId, card_id:cardId}
+    )
 }

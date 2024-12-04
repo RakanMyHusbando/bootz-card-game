@@ -39,3 +39,7 @@ app.get("/users", async (req,res) => await userHandler.handleGetAll(req,res))
 app.get("/users/:id", async (req,res) => await userHandler.handleGetById(req,res))
 app.patch("/users/:id", async (req,res) => await userHandler.handlePatch(req,res))
 app.delete("/users/:id", async (req,res) => await userHandler.handleDelete(req,res))
+
+// User-Card routes
+app.post("/users/:userId/cards/:cardId", async (req,res) => await userHandler.handlePostCard(req,res))
+app.delete("/users/:userId/cards/:cardId", async (req,res) => await userHandler.handleDeleteCard(req,res))
