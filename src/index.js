@@ -6,8 +6,10 @@ import { CardHandler, UserHandler } from "./api.js"
 
 dotenv.config()
 
-
 const db = new Storage(process.env.DB_FILE)
+const cardHandler = new CardHandler(process.env.DB_FILE)
+const userHandler = new UserHandler(process.env.DB_FILE)
+
 
 // executing schema.sql to create tables
 await db.executeSchema(fs.readFileSync("src/schema.sql").toString())
@@ -21,17 +23,12 @@ app.use(express.json())
 
 app.listen(process.env.PORT,() => console.log(`Server running on  http://127.0.0.1:${process.env.PORT}`))
 
-const cardHandler = new CardHandler(process.env.DB_FILE)
-
 // Card routes
 app.post("/card", async (req,res) => await cardHandler.handlePost(req,res))
 app.get("/card", async (req,res) => await cardHandler.handleGetAll(req,res))
 app.get("/card/:id", async (req,res) => await cardHandler.handleGetById(req,res))
 app.patch("/card/:id", async (req,res) => await cardHandler.handlePatch(req,res))
 app.delete("/card/:id", async (req,res) => await cardHandler.handleDelete(req,res))
-
-
-const userHandler = new UserHandler(process.env.DB_FILE)
 
 // User routes
 app.post("/user", async (req,res) => await userHandler.handlePost(req,res))

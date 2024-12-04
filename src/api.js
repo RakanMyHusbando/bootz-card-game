@@ -268,11 +268,14 @@ export class UserHandler extends Storage {
      * @returns {Promise<void>} 
      */
     handlePostCard = async (req, res) => {
-        const userCard = await this.#getCard(parseInt(req.params.userId),parseInt(req.params.cardId))
-            .then(data=>data.length > 0 ? data[0].own_amount : false)
-            .catch(()=>false)
-        if(userCard != false)
-            await this.#updateCards(parseInt(req.params.userId),parseInt(req.params.cardId),userCard+1)
+        const userCardOwnAmount = await this.#getCard(parseInt(req.params.userId),parseInt(req.params.cardId))
+            .then(data=>data.length > 0 ? data[0].own_amount : null)
+            .catch(err=>{
+                console.error(err)
+                return null
+            })
+        if(userCard)
+            await this.#updateCards(parseInt(req.params.userId),parseInt(req.params.cardId),userCardOwnAmount+1)
                 .then(data => formApiResponse(res, 200, null, "User card updated"))
                 .catch(err => formApiResponse(res, 500, null, err))
         else 
