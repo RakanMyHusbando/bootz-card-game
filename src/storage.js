@@ -13,23 +13,17 @@ export class Storage {
      * Executes a SQL query.
      * @param {string} query - The SQL query to execute.
      * @param {any[]} [params=[]] - An optional array of parameters to bind to the query.
-     * @returns {Promise<any[]>} - Returns a promise that resolves to an array of rows returned by the query.
+     * @returns {Promise<any[]|Error>} - Returns a promise that resolves to an array of rows returned by the query, or an error object if the query fails.
      * @private
      */
-    #execute = async (query,params=[]) => {
+    #execute = async (query,params=[]) => new Promise((resolve, reject) => {
         const db = new sqlite3.Database(this.dbFile)
-        const result = new Promise((reject,resolve)=>{
-            if (params.length>0)
-                db.all(query,params,(err,rows)=>err ? reject(err) : resolve(rows))
-            else
-                db.all(query,(err,rows)=>err ? reject(err) : resolve(rows))
-        })
+        if (params.length > 0)
+            db.all(query, params, (err, rows) => err ? reject(err) : resolve(rows))
+        else
+            db.all(query, (err, rows) => err ? reject(err) : resolve(rows))
         db.close()
-        if (result.errno)
-            return new Error(result.message)
-        else 
-            return result
-    }
+    })
 
     /**
      * Executes a series of SQL queries defined in the schema content.
@@ -69,17 +63,19 @@ export class Storage {
      */
     select = async (table,columns,where) => {
         let query = `SELECT ${columns.join(",")} FROM ${table}`
+        const params = []
         if(where){
             query += " WHERE"
             let i = 0
             for(const key in where){
+                params.push(where[key])
                 if (i>0)
                     query += " AND"
                 query += ` ${key} = ?`
                 i++
             }
         }
-        return this.#execute(query).catch(()=>new Error("Error while selecting data."))
+        return this.#execute(query,params)
     }
 
     /**
@@ -92,6 +88,7 @@ export class Storage {
      */
     update = async (table,columns,values,where) => {
         let query = `UPDATE ${table} SET ${columns.map((c,i)=>`${c} = ?`).join(",")}`
+        const params = values
         if(where){
             query += " WHERE"
             let i = 0
@@ -100,9 +97,10 @@ export class Storage {
                     query += " AND"
                 query += ` ${key} = ?`
                 i++
+                params.push(where[key])
             }
         }
-        return this.#execute(query,values).catch(err=>err)
+        return this.#execute(query,params)
     }
 
     /**
@@ -113,6 +111,7 @@ export class Storage {
      */
     delete = async (table,where) => {
         let query = `DELETE FROM ${table}`
+        const columns = []
         if(where){
             query += " WHERE"
             let i = 0
@@ -121,8 +120,9 @@ export class Storage {
                     query += " AND"
                 query += ` ${key} = ?`
                 i++
+                columns.push(where[key])
             }
         }
-        return this.#execute(query).catch(err=>err)
+        return this.#execute(query, columns.length>0 ? columns : undefined)
     }
 }

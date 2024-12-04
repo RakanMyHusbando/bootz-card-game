@@ -2,7 +2,7 @@ import fs from "node:fs"
 import  express  from "express"
 import dotenv from "dotenv"
 import { Storage } from "./storage.js"
-import { CardHandler } from "./api.js"
+import { CardHandler, UserHandler } from "./api.js"
 
 dotenv.config()
 
@@ -29,3 +29,9 @@ app.get("/cards/:id", async (req,res) => await cardHandler.handleGetById(req,res
 app.post("/cards", async (req,res) => await cardHandler.handlePost(req,res))
 app.patch("/cards/:id", async (req,res) => await cardHandler.handlePatch(req,res))
 app.delete("/cards/:id", async (req,res) => await cardHandler.handleDelete(req,res))
+
+
+const userHandler = new UserHandler(process.env.DB_FILE)
+
+// User routes
+app.post("/users", async (req,res) => await userHandler.handlePost(req,res))
