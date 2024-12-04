@@ -276,11 +276,11 @@ export class UserHandler extends Storage {
             })
         if(userCard)
             await this.#updateCards(parseInt(req.params.userId),parseInt(req.params.cardId),userCardOwnAmount+1)
-                .then(data => formApiResponse(res, 200, null, "User card updated"))
+                .then(() => formApiResponse(res, 200, null, "User card updated"))
                 .catch(err => formApiResponse(res, 500, null, err))
         else 
             await this.insert("user_card",["user_id","card_id","own_amount"],[parseInt(req.params.userId),parseInt(req.params.cardId),1])
-                .then(data => formApiResponse(res, 200, null, "User card created"))
+                .then(() => formApiResponse(res, 200, null, "User card created"))
                 .catch(err => formApiResponse(res, 500, null, err))
     }
     /**
@@ -292,17 +292,22 @@ export class UserHandler extends Storage {
      * @param {Object} res - The response object.
      * @returns {Promise<void>} 
      */
-    handleDeleteCard = async (req,res) => await this.#getCard(parseInt(req.params.userId),parseInt(req.params.cardId))
-        .then(async data => {
-            if (data[0].own_amount > 1) 
-                await this.#updateCards(parseInt(req.params.userId),parseInt(req.params.cardId),data[0].own_amount-1)
-                    .then(data => formApiResponse(res, 200, null, "User card updated"))
-            else
-                await this.delete("user_card",{user_id:parseInt(req.params.userId),card_id:parseInt(req.params.cardId)})
-                    .then(data => formApiResponse(res, 200, null, "User card deleted"))
-        })
-        .catch(err => formApiResponse(res, 500, null, err))
-
+    handleDeleteCard = async (req,res) => { 
+        const userCardOwnAmount = await this.#getCard(parseInt(req.params.userId),parseInt(req.params.cardId))
+            .then(data=>data.length > 0 ? data[0].own_amount : null)
+            .catch(err=>{
+                console.error(err)
+                return null
+            })
+        if(userCard)
+            await this.#updateCards(parseInt(req.params.userId),parseInt(req.params.cardId),userCardOwnAmount-1)
+                .then(() => formApiResponse(res, 200, null, "User card updated"))
+                .catch(err => formApiResponse(res, 500, null, err))
+        else 
+            await this.delete("user_card",{user_id:parseInt(req.params.userId),card_id:parseInt(req.params.cardId)})
+                .then(() => formApiResponse(res, 200, null, "User card deleted"))
+                .catch(err => formApiResponse(res, 500, null, err))
+    }
     /**
      * Get all cards for a user.
      * @param {number} userId - The id of the user.
