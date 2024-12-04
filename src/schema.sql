@@ -1,5 +1,6 @@
 create table if not exists user (
     id integer primary key autoincrement,
+    name text not null,
     discord_id text not null
 );
 create table if not exists card (
