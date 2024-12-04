@@ -18,7 +18,7 @@ const app = express()
 app.use(express.urlencoded({extended:true}))
 app.use(express.json())
 
-app.listen(process.env.PORT,() => console.log(`Server running on port ${process.env.PORT}`))
+app.listen(process.env.PORT,() => console.log(`Server running on  http://127.0.0.1:${process.env.PORT}`))
 
 const card = new Card(db)
 const user = new User(db)
@@ -38,5 +38,5 @@ app.patch("/users/:id",async (req,res)=>res.json(await user.update(req.params.id
 app.delete("/users/:id",async (req,res)=>res.json(await user.delete(req.params.id)))
 
 // User cards routes
-app.post("/users/:userId/cards/",async (req,res) => res.json(await user.addCard(req.params.userId,req.body.cardId)))
+app.post("/users/:userId/cards/:cardId",async (req,res) => res.json(await user.addCard(req.params.userId,req.params.cardId)))
 app.delete("/users/:userId/cards/:cardId",async (req,res) => res.json(await user.removeCard(req.params.userId,req.params.cardId)))

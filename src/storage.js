@@ -212,12 +212,13 @@ export class User {
      * Retrieves all users from the database.
      * @returns {Promise<any[]>} - Returns a promise that resolves to an array of users.
      */
-    getAll = async () => await this.db.select("user")
+    getAll = async () => await this.db.select("user",["*"])
         .then(async users => {
             for (const user of users) 
                 user.cards = await this.#getUserCards(user.id)
             return users
         })
+        .catch(err=>console.error(err))
 
     /**
      * Retrieves a user by their ID.
@@ -251,16 +252,10 @@ export class User {
      * @param {Map<string, any>} card - The card object to insert.
      * @returns {Promise<Error|null>} - Returns a promise that resolves to null if the insertion is successful, or an error if it fails.
      */
-    postCard = async (userid,card) => {
-        const keys = []
-        const values = []
-        for(const key in card){
-            keys.push(key)
-            values.push(card[key])
-        }
-        const userCard = await this.db.select("user_card",["*"],{user_id:userid,card_id:card.id})
+    postCard = async (userid,cardId) => {
+        const userCard = await this.db.select("user_card",["*"],{user_id:userid,card_id:cardId})
         if (userCard.length>0)
-            return this.db.update("user_card",["own_amount"],[ownAmount[0].own_amount+1],["user_id","card_id"],[userid,card.id])
+            return this.db.update("user_card",["own_amount"],[ownAmount[0].own_amount+1],["user_id","card_id"],[userid,cardId])
         else
             return this.db.insert("user_card",["user_id","card_id","own_amount"],[userid,cardId,1])
     }
@@ -302,3 +297,5 @@ export class User {
             return this.db.delete("user_card",["user_id","card_id"],[userid,cardid])
     }
 }
+
+
