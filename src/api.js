@@ -190,4 +190,74 @@ export class UserHandler extends Storage {
             .then(data => formApiResponse(res, 200, data, "User created"))
             .catch(err => formApiResponse(res, 500, null, err))
     }
+
+    /**
+     * Handle GET request to get all users.
+     * @param {Object} req - The request object.
+     * @param {Object} res - The response object.
+     * @returns {Promise<void>}
+     */
+    handleGetAll = async (req,res) => {
+        // TODO: add user cards
+        await this.select("user",["*"])
+            .then(data => formApiResponse(res, 200, data, "User retrieved"))
+            .catch(err => formApiResponse(res, 500, null, err))
+    }
+
+    /**
+     * Handle GET request to get a user by id.
+     * @param {Object} req - The request object.
+     * @param {Object} req.params - The request parameters.
+     * @param {string} req.params.id - The id of the user.
+     * @param {Object} res - The response object.
+     * @returns {Promise<void>}
+     **/
+    handleGetById = async (req,res) => {
+        // TODO: add user cards
+        await this.select("user",["*"],{id:parseInt(req.params.id)})
+            .then(data => formApiResponse(res, 200, data, "User retrieved"))
+            .catch(err => formApiResponse(res, 500, null, err))
+    }
+
+    /**
+     * Handle PATCH request to update a user by id.
+     * @param {Object} req - The request object.
+     * @param {Object} req.params - The request parameters.
+     * @param {string} req.params.id - The id of the user.
+     * @param {Object} req.body - The body of the request.
+     * @param {string} [req.body.name] - The name of the user.
+     * @param {string} [req.body.discord_id] - The discord id of the user.
+     * @param {Object} res - The response object.
+     * @returns {Promise<void>}
+     */
+    handlePatch = async (req,res) => {
+        const keys = ["name","discord_id"]
+        const columns = []
+        const values = []
+        for (const key of keys) {
+            if (req.body[key]) {
+                values.push(req.body[key])
+                columns.push(key)
+            }
+        }
+        await this.update("user", columns, values, {id:parseInt(req.params.id)})
+            .then(data => formApiResponse(res, 200, data, "User updated"))
+            .catch(err => formApiResponse(res, 500, null, err))
+    }
+
+
+    /**
+     * Handle DELETE request to delete a user by id.
+     * @param {Object} req - The request object.
+     * @param {Object} req.params - The request parameters.
+     * @param {string} req.params.id - The id of the user.
+     * @param {Object} res - The response object.
+     * @returns {Promise<void>}
+     */
+    handleDelete = async (req,res) => {
+        // TODO: delete user cards
+        await this.delete("user", {id:parseInt(req.params.id)})
+            .then(data => formApiResponse(res, 200, data, "User deleted"))
+            .catch(err => formApiResponse(res, 500, null, err))
+    }
 }
