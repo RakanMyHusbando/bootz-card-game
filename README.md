@@ -29,10 +29,7 @@ Bootz card game is a web application that allows users to manage and play with c
 6. Run the application:
     ```sh
     npm run start
-    ```
-    or in developer mode:
-    ```sh
-    npm run dev
+    npm run dev # developer mode
     ```
 
 ## API Endpoints
