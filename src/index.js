@@ -24,22 +24,22 @@ app.listen(process.env.PORT,() => console.log(`Server running on  http://127.0.0
 const cardHandler = new CardHandler(process.env.DB_FILE)
 
 // Card routes
-app.post("/cards", async (req,res) => await cardHandler.handlePost(req,res))
-app.get("/cards", async (req,res) => await cardHandler.handleGetAll(req,res))
-app.get("/cards/:id", async (req,res) => await cardHandler.handleGetById(req,res))
-app.patch("/cards/:id", async (req,res) => await cardHandler.handlePatch(req,res))
-app.delete("/cards/:id", async (req,res) => await cardHandler.handleDelete(req,res))
+app.post("/card", async (req,res) => await cardHandler.handlePost(req,res))
+app.get("/card", async (req,res) => await cardHandler.handleGetAll(req,res))
+app.get("/card/:id", async (req,res) => await cardHandler.handleGetById(req,res))
+app.patch("/card/:id", async (req,res) => await cardHandler.handlePatch(req,res))
+app.delete("/card/:id", async (req,res) => await cardHandler.handleDelete(req,res))
 
 
 const userHandler = new UserHandler(process.env.DB_FILE)
 
 // User routes
-app.post("/users", async (req,res) => await userHandler.handlePost(req,res))
-app.get("/users", async (req,res) => await userHandler.handleGetAll(req,res))
-app.get("/users/:id", async (req,res) => await userHandler.handleGetById(req,res))
-app.patch("/users/:id", async (req,res) => await userHandler.handlePatch(req,res))
-app.delete("/users/:id", async (req,res) => await userHandler.handleDelete(req,res))
+app.post("/user", async (req,res) => await userHandler.handlePost(req,res))
+app.get("/user", async (req,res) => await userHandler.handleGetAll(req,res))
+app.get("/user/:id", async (req,res) => await userHandler.handleGetById(req,res))
+app.patch("/user/:id", async (req,res) => await userHandler.handlePatch(req,res))
+app.delete("/user/:id", async (req,res) => await userHandler.handleDelete(req,res))
 
 // User-Card routes
-app.post("/users/:userId/cards/:cardId", async (req,res) => await userHandler.handlePostCard(req,res))
-app.delete("/users/:userId/cards/:cardId", async (req,res) => await userHandler.handleDeleteCard(req,res))
+app.post("/user/:userId/card/:cardId", async (req,res) => await userHandler.handlePostCard(req,res))
+app.delete("/user/:userId/card/:cardId", async (req,res) => await userHandler.handleDeleteCard(req,res))
