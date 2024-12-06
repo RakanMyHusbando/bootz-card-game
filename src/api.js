@@ -11,18 +11,22 @@ const formApiResponse = (res, status, data, message) => {
     res.json(body)
 }
 
-export class CardHandler extends Storage {
+export class ApiHandler extends Storage {
+
     /**
-     * Create a CardHandler instance.
-     * @param {string} dbFile - The database file path.
+     * Creates an instance of ApiHandler.
+     * @param {string} dbFile - The path to the SQLite database file. 
+     * @param {number} [timeout=5000] - The timeout for the SQLite database connection.
      */
-    constructor(dbFile) {
-        super(dbFile)
+    constructor(dbFile, timeout = 5000) {
+        super(dbFile, timeout)
     }
 
-    #keys = ["title","description","type","rarity","attack","defense","health"]
+/* -------------------------------------------- Card Handler -------------------------------------------- */
 
-    #storageToRespData = (storageData) => {
+    #cardKeys = ["title","description","type","rarity","attack","defense","health"]
+
+    #StorageToRespData = (storageData) => {
         return {
             id: storageData.id,
             title: storageData.title,
@@ -49,39 +53,40 @@ export class CardHandler extends Storage {
      * @param {number} req.body.defense - The defense value of the card.
      * @param {number} req.body.health - The health value of the card.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>}
+     * @returns {null}
      */
-    handlePost = async (req, res) => {
-        const values = []
-        for (const key of this.#keys) {
-            if (req.body[key]) 
-                values.push(req.body[key])
-            else 
-                return formApiResponse(res, 500, null, "Missing required fields")
+    CardPost(req, res) {
+        const data = []
+        try {
+            for (const key of this.#cardKeys) {
+                if (!req.body[key]) 
+                    throw new Error("Missing required fields") 
+                data.push(req.body[key])
+            }   
+            this.insert("card", this.#cardKeys, data)
+            formApiResponse(res, 200, null, "Card created")
+        } catch(err) {
+            return formApiResponse(res, 500, null, err)
         }
-        await this.insert("card", this.#keys, values)
-            .then(data => formApiResponse(res, 200, data, "Card created"))
-            .catch(err => formApiResponse(res, 500, null, err))
     }
 
     /**
      * Handle GET request to get all cards.
      * @param {Object} req - The request object.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>}
+     * @returns {null}
      */
-    handleGetAll = async (req,res) => {
-        await this.select("card",["*"])
-            .then(storageDataLst => {
-                const data = []
-                storageDataLst.forEach(storageData => {
-                    data.push(this.#storageToRespData(storageData))
-                })
-                if (data.length === 0) 
-                    return formApiResponse(res, 404, null, "No cards found")
-                formApiResponse(res, 200, data, "Card retrieved")
-            })
-            .catch(err => formApiResponse(res, 500, null, err))
+    CardGetAll(req,res) {
+        const data = []
+        try {
+            const rows = this.select("card",["*"])
+            rows.forEach(row => data.push(this.#StorageToRespData(row)))
+            if (data.length === 0) 
+                return formApiResponse(res, 404, null, "No cards found")
+            formApiResponse(res, 200, data, "Card retrieved")
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
+        }
     }
 
     /**
@@ -90,20 +95,19 @@ export class CardHandler extends Storage {
      * @param {Object} req.params - The request parameters.
      * @param {string} req.params.id - The id of the card.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>}
+     * @returns {null}
      */
-    handleGetById = async (req, res) => {
-        await this.select("card",["*"],{id:parseInt(req.params.id)})
-            .then(storageDataLst => {
-                const data = []
-                storageDataLst.forEach(storageData => {
-                    data.push(this.#storageToRespData(storageData))
-                })
-                if(data.length === 0)
-                    return formApiResponse(res, 404, null, "Card not found")
-                formApiResponse(res, 200, data, "Card retrieved")
-            })
-            .catch(err => formApiResponse(res, 500, null, err))
+    CardGetById(req, res) {
+        const data = []
+        try {
+            const rows = this.select("card",["*"],{id:parseInt(req.params.id)})
+            rows.forEach(storageData => data.push(this.#StorageToRespData(storageData)))
+            if (data.length === 0) 
+                return formApiResponse(res, 404, null, "No cards found")
+            formApiResponse(res, 200, data, "Card retrieved")
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
+        }
     }
 
   
@@ -121,20 +125,22 @@ export class CardHandler extends Storage {
      * @param {number} [req.body.defense] - The defense value of the card.
      * @param {number} [req.body.health] - The health value of the card.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>}
+     * @returns {null}
      */
-    handlePatch = async (req, res) => {
-        const keys = ["title","description","type","max_amount","remaining_amount","attack","defense","health"]
+    CardPatch(req, res) {
         const columns = []
         const values = []
-        for (const key of keys) 
-            if (req.body[key]) {
-                values.push(req.body[key])
-                columns.push(key)
-            }
-        await this.update("card", columns, values, {id:parseInt(req.params.id)})
-            .then(data => formApiResponse(res, 200, null, "Card updated"))
-            .catch(err => formApiResponse(res, 500, null, err))
+        try {
+            for (const key of this.#cardKeys) 
+                if (req.body[key]) {
+                    values.push(req.body[key])
+                    columns.push(key)
+                }
+            this.update("card", columns, values, {id:parseInt(req.params.id)})
+            formApiResponse(res, 200, null, "Card updated")
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
+        }
     }
 
     /**
@@ -143,22 +149,19 @@ export class CardHandler extends Storage {
      * @param {Object} req.params - The request parameters.
      * @param {string} req.params.id - The id of the card.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>}
+     * @returns {null}
      */
-    handleDelete = async (req, res) => await this.delete("card", {id:parseInt(req.params.id)})
-        .then(data => formApiResponse(res, 200, data, "Card deleted"))
-        .catch(err => formApiResponse(res, 500, null, err))
-}
-
-
-export class UserHandler extends Storage {
-    /**
-     * Create a UserHandler instance.
-     * @param {string} dbFile - The database file path.
-     */
-    constructor(dbFile) {
-        super(dbFile)
+    CardDelete(req, res) {
+        try {
+            this.delete("card", {id:parseInt(req.params.id)})
+            formApiResponse(res, 200, data, "Card deleted")
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
+        }
     }
+/* -------------------------------------------- User Handler -------------------------------------------- */
+
+    #userKeys = ["name","discord_id"]   
 
     /**
      * Handle POST request to create a new user.
@@ -167,38 +170,44 @@ export class UserHandler extends Storage {
      * @param {string} req.body.name - The name of the user.
      * @param {string} req.body.discord_id - The discord id of the user.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>}
+     * @returns {null}
      */
-    handlePost = async (req, res) => {
-        const keys = ["name","discord_id"]
-        const values = []
-        for (const key of keys) {
-            if (req.body[key]) 
-                values.push(req.body[key])
-            else 
-                return formApiResponse(res, 500, null, "Missing required fields")
+    UserPost(req, res) {
+        const data = []
+        try {
+            for (const key of this.#userKeys) {
+                if (!req.body[key]) 
+                    throw new Error("Missing required fields")
+                data.push(req.body[key])      
+            }
+            this.insert("user", this.#userKeys, data)
+            formApiResponse(res, 200, null, "User created")
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
         }
-        await this.insert("user", keys, values)
-            .then(data => formApiResponse(res, 200, null, "User created"))
-            .catch(err => formApiResponse(res, 500, null, err))
     }
 
     /**
      * Handle GET request to get all users.
      * @param {Object} req - The request object.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>}
+     * @returns {null}
      */
-    handleGetAll = async (req,res) => await this.select("user",["*"])
-        .then(async data => {
-            if(data.length > 0){
-                for (const user of data) 
-                    user.cards = await this.#getCards(user.id).catch(()=>[])
-                formApiResponse(res, 200, data, "User retrieved")
+    UserGetAll(req,res) {
+        try {
+            const rows = this.select("user",["*"])
+            if(rows.length > 0){
+                for (const user of rows) {
+                    user.cards = []
+                    user.cards = this.select("user_card",["*"],{user_id:parseInt(req.params.id)})
+                }
+                formApiResponse(res, 200, rows, "User retrieved")
             } else
                 formApiResponse(res, 404, null, "No user found")
-        })
-        .catch(err => formApiResponse(res, 500, null, err))
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
+        } 
+    }
 
     /**
      * Handle GET request to get a user by id.
@@ -206,18 +215,21 @@ export class UserHandler extends Storage {
      * @param {Object} req.params - The request parameters.
      * @param {string} req.params.id - The id of the user.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>}
+     * @returns {null}
      **/
-    handleGetById = async (req,res) => await this.select("user",["*"],{id:parseInt(req.params.id)})
-        .then(async data => {
-            if(data.length > 0){
-                for (const user of data) 
-                    user.cards = await this.#getCards(user.id).catch(()=>[])
+    UserGetById(req,res) { 
+        try {
+            const rows = this.select("user",["*"],{id:parseInt(req.params.id)})
+            if(rows.length == 1){
+                rows[0].cards = []
+                rows[0].cards = this.select("user_card",["*"],{user_id:parseInt(req.params.id)})
                 formApiResponse(res, 200, data, "User retrieved")
             } else
                 formApiResponse(res, 404, null, "No user found")
-        })
-        .catch(err => formApiResponse(res, 500, null, err))
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
+        }
+    }
 
     /**
      * Handle PATCH request to update a user by id.
@@ -228,21 +240,19 @@ export class UserHandler extends Storage {
      * @param {string} [req.body.name] - The name of the user.
      * @param {string} [req.body.discord_id] - The discord id of the user.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>}
+     * @returns {null}
      */
-    handlePatch = async (req,res) => {
-        const keys = ["name","discord_id"]
-        const columns = []
-        const values = []
-        for (const key of keys) {
-            if (req.body[key]) {
-                values.push(req.body[key])
-                columns.push(key)
-            }
+    UserPatch(req,res) {
+        const data = []
+        try {
+            for (const key of this.#userKeys) 
+                if (req.body[key]) 
+                    data.push(req.body[key])
+            this.update("user", this.#userKeys, values, {id:parseInt(req.params.id)})
+            formApiResponse(res, 200, null, "User updated")
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
         }
-        await this.update("user", columns, values, {id:parseInt(req.params.id)})
-            .then(data => formApiResponse(res, 200, null, "User updated"))
-            .catch(err => formApiResponse(res, 500, null, err))
     }
 
     /**
@@ -251,12 +261,21 @@ export class UserHandler extends Storage {
      * @param {Object} req.params - The request parameters.
      * @param {string} req.params.id - The id of the user.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>}
+     * @returns {null}
      */
-    handleDelete = async (req,res) => await this.delete("user_card",{user_id:parseInt(req.params.id)})
-        .then(async ()=> await this.delete("user", {id:parseInt(req.params.id)}))
-        .then(data => formApiResponse(res, 200, null, "User and user_card deleted"))
-        .catch(err => formApiResponse(res, 500, null, err))
+    UserDelete(req,res) {
+        try {
+            this.#UserCardGet(req.params.id).forEach(
+                card => this.delete("user_card",{user_id:parseInt(req.params.id),card_id:card.id})
+            )
+            this.delete("user", {id:parseInt(req.params.id)})
+            formApiResponse(res, 200, null, "User deleted")
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
+        }
+    }
+
+/* -------------------------------------------- User-Card Handler -------------------------------------------- */
 
     /**
      * Handle POST request to add a card to a user's collection.
@@ -265,24 +284,34 @@ export class UserHandler extends Storage {
      * @param {string} req.params.userId - The id of the user.
      * @param {string} req.params.cardId - The id of the card.
      * @param {Object} res
-     * @returns {Promise<void>} 
+     * @returns {null}
      */
-    handlePostCard = async (req, res) => {
-        const userCardOwnAmount = await this.#getCard(parseInt(req.params.userId),parseInt(req.params.cardId))
-            .then(data=>data.length > 0 ? data[0].own_amount : null)
-            .catch(err=>{
-                console.error(err)
-                return null
+    UserCardPost(req,res) {
+        try {
+            const rows = this.select("user_card",["*"],{
+                user_id:parseInt(req.params.userId), 
+                card_id:parseInt(req.params.cardId)
             })
-        if(userCard)
-            await this.#updateCards(parseInt(req.params.userId),parseInt(req.params.cardId),userCardOwnAmount+1)
-                .then(() => formApiResponse(res, 200, null, "User card updated"))
-                .catch(err => formApiResponse(res, 500, null, err))
-        else 
-            await this.insert("user_card",["user_id","card_id","own_amount"],[parseInt(req.params.userId),parseInt(req.params.cardId),1])
-                .then(() => formApiResponse(res, 200, null, "User card created"))
-                .catch(err => formApiResponse(res, 500, null, err))
+            const amount = rows.length > 0 ? rows[0].own_amount : null
+            if(amount){
+                this.update("user_card", ["own_amount"],[amount+1],{
+                    user_id:parseInt(req.params.userId),
+                    card_id:parseInt(req.params.cardId)
+                })
+                formApiResponse(res, 200, null, "User card updated")
+            } else {
+                this.insert(
+                    "user_card",
+                    ["user_id","card_id","own_amount"],
+                    [parseInt(req.params.userId),parseInt(req.params.cardId),1]
+                )
+                formApiResponse(res, 200, null, "User card created")
+            }
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
+        }
     }
+
     /**
      * Handle DELETE request to get all cards for a user.
      * @param {Object} req - The request object.
@@ -290,53 +319,47 @@ export class UserHandler extends Storage {
      * @param {string} req.params.userId - The id of the user.
      * @param {Object} req.params.cardId - The id of the card.
      * @param {Object} res - The response object.
-     * @returns {Promise<void>} 
+     * @returns {null} 
      */
-    handleDeleteCard = async (req,res) => { 
-        const userCardOwnAmount = await this.#getCard(parseInt(req.params.userId),parseInt(req.params.cardId))
-            .then(data=>data.length > 0 ? data[0].own_amount : null)
-            .catch(err=>{
-                console.error(err)
-                return null
+    UserCardDelete = async (req,res) => { 
+        try {
+            const rows = this.select("user_card",["*"],{
+                user_id:parseInt(req.params.userId), 
+                card_id:parseInt(req.params.cardId)
             })
-        if(userCard)
-            await this.#updateCards(parseInt(req.params.userId),parseInt(req.params.cardId),userCardOwnAmount-1)
-                .then(() => formApiResponse(res, 200, null, "User card updated"))
-                .catch(err => formApiResponse(res, 500, null, err))
-        else 
-            await this.delete("user_card",{user_id:parseInt(req.params.userId),card_id:parseInt(req.params.cardId)})
-                .then(() => formApiResponse(res, 200, null, "User card deleted"))
-                .catch(err => formApiResponse(res, 500, null, err))
+            const amount = rows.length > 0 ? rows[0].own_amount : null 
+            if(amount){
+                this.update("user_card", ["own_amount"],[amount-1],{
+                    user_id:parseInt(req.params.userId),
+                    card_id:parseInt(req.params.cardId)
+                })
+                formApiResponse(res, 200, null, "User card updated")
+            } else {
+                this.delete("user_card",{
+                    user_id:parseInt(req.params.userId),
+                    card_id:parseInt(req.params.cardId)
+                })
+                formApiResponse(res, 200, null, "User card deleted")
+            }
+        } catch(err) {
+            formApiResponse(res, 500, null, err)
+        }
     }
-    /**
-     * Get all cards for a user.
-     * @param {number} userId - The id of the user.
-     * @returns {Promise<any[]|Error>} - Returns a promise that resolves to an array of rows returned by the query, or an error object if the query fails.
-     * @private
-     **/
-    #getCards = async (userId) => await this.select("user_card",["*"],{user_id:userId})
 
     /**
-     * Get a card for a user by card id.
-     * @param {number} userId 
-     * @param {number} cardId 
-     * @returns {Promise<any[]|Error>} - Returns a promise that resolves to an array of rows returned by the query, or an error object if the query fails.
-     * @private
+     * Get user cards.
+     * @param {string} userId - The id of the user.
+     * @param {string} cardId - The id of the card.
+     * @returns {Object[]} - Returns an array of user cards.
      */
-    #getCard = async (userId, cardId) => await this.select("user_card",["*"],{user_id:userId, card_id:cardId})
-
-    /**
-     * Update the amount of a card owned by a user.
-     * @param {number} userId - The id of the user.
-     * @param {number} cardId - The id of the card.
-     * @param {number} ownAmount - The amount of the card owned by the user.
-     * @returns {Promise<any[]|Error>} - Returns a promise that resolves to an array of rows returned by the query, or an error object if the query fails.
-     * @private
-     * */
-    #updateCards = async (userId, cardId, ownAmount) => await this.update(
-        "user_card", 
-        ["own_amount"], 
-        [ownAmount], 
-        {user_id:userId, card_id:cardId}
-    )
+    #UserCardGet = (userId,cardId) => {
+        try {
+            const where = {user_id:parseInt(userId)}
+            if(cardId) where.card_id = parseInt(cardId)
+            cards = this.select("user_card",["*"],where)
+        } catch(err) {
+            console.error(err)
+            return []
+        }
+    }
 }
