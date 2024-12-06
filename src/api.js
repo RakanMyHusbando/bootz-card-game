@@ -197,9 +197,8 @@ export class ApiHandler extends Storage {
         try {
             const rows = this.select("user",["*"])
             if(rows.length > 0){
-                for (const user of rows) {
-                    user.cards = []
-                    user.cards = this.select("user_card",["*"],{user_id:parseInt(req.params.id)})
+                for (let i = 0; i < rows.length; i++) {
+                    rows[i].cards = this.#UserCardGet(rows[i].id)
                 }
                 formApiResponse(res, 200, rows, "User retrieved")
             } else
@@ -221,9 +220,8 @@ export class ApiHandler extends Storage {
         try {
             const rows = this.select("user",["*"],{id:parseInt(req.params.id)})
             if(rows.length == 1){
-                rows[0].cards = []
-                rows[0].cards = this.select("user_card",["*"],{user_id:parseInt(req.params.id)})
-                formApiResponse(res, 200, data, "User retrieved")
+                rows[0].cards = this.#UserCardGet(parseInt(req.params.id))
+                formApiResponse(res, 200, rows, "User retrieved")
             } else
                 formApiResponse(res, 404, null, "No user found")
         } catch(err) {
@@ -288,11 +286,8 @@ export class ApiHandler extends Storage {
      */
     UserCardPost(req,res) {
         try {
-            const rows = this.select("user_card",["*"],{
-                user_id:parseInt(req.params.userId), 
-                card_id:parseInt(req.params.cardId)
-            })
-            const amount = rows.length > 0 ? rows[0].own_amount : null
+            const userCards = this.#UserCardGet(parseInt(req.params.userId),parseInt(req.params.cardId))
+            const amount = userCards.length > 0 ? userCards[0].own_amount : null
             if(amount){
                 this.update("user_card", ["own_amount"],[amount+1],{
                     user_id:parseInt(req.params.userId),
@@ -321,13 +316,10 @@ export class ApiHandler extends Storage {
      * @param {Object} res - The response object.
      * @returns {null} 
      */
-    UserCardDelete = async (req,res) => { 
+    UserCardDelete(req,res)  { 
         try {
-            const rows = this.select("user_card",["*"],{
-                user_id:parseInt(req.params.userId), 
-                card_id:parseInt(req.params.cardId)
-            })
-            const amount = rows.length > 0 ? rows[0].own_amount : null 
+            const userCards = this.#UserCardGet(parseInt(req.params.userId),parseInt(req.params.cardId))
+            const amount = userCards.length > 0 ? userCards[0].own_amount : null
             if(amount){
                 this.update("user_card", ["own_amount"],[amount-1],{
                     user_id:parseInt(req.params.userId),
@@ -348,15 +340,15 @@ export class ApiHandler extends Storage {
 
     /**
      * Get user cards.
-     * @param {string} userId - The id of the user.
-     * @param {string} cardId - The id of the card.
+     * @param {number} userId - The id of the user.
+     * @param {number} cardId - The id of the card.
      * @returns {Object[]} - Returns an array of user cards.
      */
     #UserCardGet = (userId,cardId) => {
         try {
-            const where = {user_id:parseInt(userId)}
-            if(cardId) where.card_id = parseInt(cardId)
-            cards = this.select("user_card",["*"],where)
+            const where = {user_id:userId}
+            if(cardId) where.card_id = cardId
+            return this.select("user_card",["*"],where)
         } catch(err) {
             console.error(err)
             return []
