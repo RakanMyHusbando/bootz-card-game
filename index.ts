@@ -1,4 +1,4 @@
-import random from "./random.json"
+import random from "./random.json";
 
 interface User {
     id: number | null;
@@ -19,60 +19,71 @@ interface Card {
     health: number;
 }
 
-function ranInt(min: number, max: number):number {
-    min = Math.ceil(min)
-    max = Math.floor(max)
-    return Math.floor(Math.random() * (max - min + 1)) + min
+function ranInt(min: number, max: number): number {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-
-// post 100 test cards
-let j = 0
-for(let i = 0; i < random.names.length; i++){
-    const card: Card = {
-        id: null,
-        title: random.names[i],
-        description: random.descriptions[i],
-        type: random.types[j],
-        rarity: ranInt(1, 10),
-        cost: ranInt(1, 100),
-        attack: ranInt(1, 100),
-        defense: ranInt(1, 100),
-        health: ranInt(1, 1000)
+const addContent = async (): Promise<void> => {
+    // post 100 cards
+    let j = 0;
+    for (let i = 0; i < random.names.length; i++) {
+        const card: Card = {
+            id: null,
+            title: random.names[i],
+            description: random.descriptions[i],
+            type: random.types[j],
+            rarity: ranInt(1, 10),
+            cost: ranInt(1, 100),
+            attack: ranInt(1, 100),
+            defense: ranInt(1, 100),
+            health: ranInt(1, 1000),
+        };
+        await fetch("http://localhost:5000/card", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(card),
+        });
+        j === 9 ? (j = 0) : j++;
     }
-    fetch("http://localhost:5000/card", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(card)
-    })
-
-    j === 9 ? j = 0 : j++
-}
-
-// post 100 test users
-for(let i = 0; i < 100; i++){
-    const user: User = {
-        id: null,
-        name: "name"+i,
-        discord_id: "dc"+i,
-        user_cards: null
+    // post 100 users
+    for (let i = 0; i < 100; i++) {
+        const user: User = {
+            id: null,
+            name: "name" + i,
+            discord_id: "dc" + i,
+            user_cards: null,
+        };
+        await fetch("http://localhost:5000/user", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(user),
+        });
     }
-    fetch("http://localhost:5000/user", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(user)
-    })
-}
+};
 
-// post 100 cards to random users
-for(let i = 0; i < 100; i++){
-    const user_id = ranInt(1, 100)
-    const card_id = ranInt(1, 100)
-    fetch(`http://localhost:5000/user/${user_id}/card/${card_id}`, {
-        method: "POST"
-    })
-}
+const addUserCard = async (): Promise<void> => {
+    const users = await fetch("http://localhost:5000/user")
+        .then((res) => res.json())
+        .then((res) => res.data);
+    const cards = await fetch("http://localhost:5000/card")
+        .then((res) => res.json())
+        .then((res) => res.data);
+
+    // post 100 user cards
+    for (let i = 0; i < 100; i++) {
+        const ranUserId = await users[ranInt(0, (await users.length) - 1)].id;
+        const ranCardId = await cards[ranInt(0, (await cards.length) - 1)].id;
+        await fetch(
+            `http://localhost:5000/user/${ranUserId}/card/${ranCardId}`,
+            { method: "POST" },
+        );
+    }
+};
+
+addContent().then(() => addUserCard());
