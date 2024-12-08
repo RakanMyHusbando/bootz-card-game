@@ -1,4 +1,4 @@
-import sqlite3 from 'better-sqlite3'
+import sqlite3 from "better-sqlite3";
 
 export class Storage {
     /**
@@ -8,7 +8,7 @@ export class Storage {
      */
     constructor(dbFile, timeout = 5000) {
         this.db = new sqlite3(dbFile, { timeout: timeout });
-        process.on('SIGINT', () => {
+        process.on("SIGINT", () => {
             this.close();
             process.exit(0);
         });
@@ -28,7 +28,10 @@ export class Storage {
      * @returns {null} - Returns null if all queries are executed successfully, or an error if any query fails.
      */
     executeSchema(schemaContent) {
-        const queries = schemaContent.replace(/\n/g, "").split(";").filter(Boolean);
+        const queries = schemaContent
+            .replace(/\n/g, "")
+            .split(";")
+            .filter(Boolean);
         try {
             this.db.transaction(() => {
                 for (const query of queries) {
@@ -50,7 +53,7 @@ export class Storage {
      * @returns {Error|null} - Returns null if the insertion is successful, or an error if it fails.
      */
     insert(table, columns, values) {
-        let query = `INSERT INTO ${table} (${columns.join(",")}) VALUES (${values.map(v => "?").join(",")})`;
+        let query = `INSERT INTO ${table} (${columns.join(",")}) VALUES (${values.map((v) => "?").join(",")})`;
         try {
             const stmt = this.db.prepare(query);
             stmt.run(...values);
@@ -75,8 +78,7 @@ export class Storage {
             let i = 0;
             for (const key in where) {
                 params.push(where[key]);
-                if (i > 0)
-                    query += " AND";
+                if (i > 0) query += " AND";
                 query += ` ${key} = ?`;
                 i++;
             }
@@ -104,8 +106,7 @@ export class Storage {
             query += " WHERE";
             let i = 0;
             for (const key in where) {
-                if (i > 0)
-                    query += " AND";
+                if (i > 0) query += " AND";
                 query += ` ${key} = ?`;
                 i++;
                 params.push(where[key]);
@@ -114,6 +115,22 @@ export class Storage {
         try {
             const stmt = this.db.prepare(query);
             stmt.run(...params);
+            return null;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    /**
+     * Updates rows in the specified table.
+     * @param {string} query - sqlite query.
+     * @param {any[]} values - An array of values to be updated in the specified columns.
+     * @returns {Promise<Error|null>} - Returns a promise that resolves to null if the update is successful, or an error if it fails.
+     */
+    updateQuery(query, values) {
+        try {
+            const stmt = this.db.prepare(query);
+            stmt.run(...values);
             return null;
         } catch (err) {
             throw err;
@@ -133,8 +150,7 @@ export class Storage {
             query += " WHERE";
             let i = 0;
             for (const key in where) {
-                if (i > 0)
-                    query += " AND";
+                if (i > 0) query += " AND";
                 query += ` ${key} = ?`;
                 i++;
                 params.push(where[key]);

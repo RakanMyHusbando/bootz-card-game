@@ -344,14 +344,11 @@ export class ApiHandler extends Storage {
      */
     UserCardPostUnkown(req, res) {
         try {
-            this.update(
-                "user",
-                ["unknown_card_amount = unknown_card_amount + 1"],
-                [],
-                {
-                    id: parseInt(req.params.userId),
-                },
+            this.updateQuery(
+                "UPDATE user SET unknown_card_amount = unknown_card_amount + 1 WHERE id = ?",
+                [parseInt(req.params.userId)],
             );
+            formApiResponse(res, 200, null, "Added 1 unknown card");
         } catch (err) {
             formApiResponse(res, 500, null, err);
         }
@@ -402,14 +399,11 @@ export class ApiHandler extends Storage {
      */
     UserCardDeleteUnkown(req, res) {
         try {
-            this.update(
-                "user",
-                ["unknown_card_amount = unknown_card_amount - 1"],
-                [],
-                {
-                    id: parseInt(req.params.userId),
-                },
+            this.updateQuery(
+                "UPDATE user SET unknown_card_amount = unknown_card_amount - 1 WHERE id = ?",
+                [parseInt(req.params.userId)],
             );
+            formApiResponse(res, 200, null, "Subtracted 1 unknown card");
         } catch (err) {
             formApiResponse(res, 500, null, err);
         }
