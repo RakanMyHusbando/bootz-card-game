@@ -198,7 +198,27 @@ export class ApiHandler extends Storage {
             );
             formApiResponse(res, 200, null, "User created");
         } catch (err) {
-            formApiResponse(res, 500, null, err);
+            if (
+                err.message ==
+                "SqliteError: UNIQUE constraint failed: user.discord_id"
+            ) {
+                formApiResponse(
+                    res,
+                    424,
+                    null,
+                    new Error("Discord-ID already exists"),
+                );
+            } else if (
+                err.message ==
+                "SqliteError: UNIQUE constraint failed: user.name"
+            ) {
+                formApiResponse(
+                    res,
+                    424,
+                    null,
+                    new Error("Name already exists"),
+                );
+            }
         }
     }
 

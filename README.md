@@ -128,6 +128,16 @@ Bootz card game is a web application that allows users to manage and play with c
 
 ### User-Card Endpoints
 
+- **Add a unknown card to a user's collection**
+    ```http
+    POST /user/:userId/card
+    ```
+
+- **Remove a unknown card from a user's collection**
+    ```http
+    DELETE /user/:userId/card
+    ```
+
 - **Add a card to a user's collection**
     ```http
     POST /user/:userId/card/:cardId
