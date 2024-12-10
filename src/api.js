@@ -21,6 +21,23 @@ export class ApiHandler extends Storage {
         super(dbFile, timeout);
     }
 
+    /**
+     * Search for query parameters in the request object.
+     * @param {string[]} params - A list of expected query parameters.
+     * @param {Object} req - The request object.
+     */
+    #QueryParams(req, params) {
+        const where = {};
+        let found = false;
+        for (const key of params) {
+            if (req.query[key]) {
+                where[key] = req.query[key];
+                found = true;
+            }
+        }
+        return found ? where : null;
+    }
+
     /* -------------------------------------------- Card Handler -------------------------------------------- */
 
     #cardKeys = [
@@ -82,36 +99,15 @@ export class ApiHandler extends Storage {
      * @param {Object} res - The response object.
      * @returns {null}
      */
-    CardGetAll(req, res) {
+    CardGet(req, res) {
         const data = [];
         try {
-            const rows = this.select("card", ["*"]);
-            rows.forEach((row) => data.push(this.#StorageToRespData(row)));
-            if (data.length === 0)
-                return formApiResponse(res, 404, null, "No cards found");
-            formApiResponse(res, 200, data, "Card retrieved");
-        } catch (err) {
-            formApiResponse(res, 500, null, err);
-        }
-    }
-
-    /**
-     * Handle GET request to get a card by id.
-     * @param {Object} req - The request object.
-     * @param {Object} req.params - The request parameters.
-     * @param {string} req.params.id - The id of the card.
-     * @param {Object} res - The response object.
-     * @returns {null}
-     */
-    CardGetById(req, res) {
-        const data = [];
-        try {
-            const rows = this.select("card", ["*"], {
-                id: parseInt(req.params.id),
-            });
-            rows.forEach((storageData) =>
-                data.push(this.#StorageToRespData(storageData)),
+            const rows = this.select(
+                "card",
+                ["*"],
+                this.#QueryParams(req, this.#cardKeys),
             );
+            rows.forEach((row) => data.push(this.#StorageToRespData(row)));
             if (data.length === 0)
                 return formApiResponse(res, 404, null, "No cards found");
             formApiResponse(res, 200, data, "Card retrieved");
@@ -228,35 +224,17 @@ export class ApiHandler extends Storage {
      * @param {Object} res - The response object.
      * @returns {null}
      */
-    UserGetAll(req, res) {
+    UserGet(req, res) {
         try {
-            const rows = this.select("user", ["*"]);
+            const rows = this.select(
+                "user",
+                ["*"],
+                this.#QueryParams(req, this.#userKeys),
+            );
             if (rows.length > 0) {
                 for (let i = 0; i < rows.length; i++) {
                     rows[i].cards = this.#UserCardGet(rows[i].id);
                 }
-                formApiResponse(res, 200, rows, "User retrieved");
-            } else formApiResponse(res, 404, null, "No user found");
-        } catch (err) {
-            formApiResponse(res, 500, null, err);
-        }
-    }
-
-    /**
-     * Handle GET request to get a user by id.
-     * @param {Object} req - The request object.
-     * @param {Object} req.params - The request parameters.
-     * @param {string} req.params.id - The id of the user.
-     * @param {Object} res - The response object.
-     * @returns {null}
-     **/
-    UserGetById(req, res) {
-        try {
-            const rows = this.select("user", ["*"], {
-                id: parseInt(req.params.id),
-            });
-            if (rows.length == 1) {
-                rows[0].cards = this.#UserCardGet(parseInt(req.params.id));
                 formApiResponse(res, 200, rows, "User retrieved");
             } else formApiResponse(res, 404, null, "No user found");
         } catch (err) {

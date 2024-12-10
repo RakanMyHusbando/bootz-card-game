@@ -23,15 +23,13 @@ app.listen(process.env.PORT, () =>
 
 // Card routes
 app.post("/card", (req, res) => apiHandler.CardPost(req, res));
-app.get("/card", (req, res) => apiHandler.CardGetAll(req, res));
-app.get("/card/:id", (req, res) => apiHandler.CardGetById(req, res));
+app.get("/card", (req, res) => apiHandler.CardGet(req, res));
 app.patch("/card/:id", (req, res) => apiHandler.CardPatch(req, res));
 app.delete("/card/:id", (req, res) => apiHandler.CardDelete(req, res));
 
 // User routes
 app.post("/user", (req, res) => apiHandler.UserPost(req, res));
-app.get("/user", (req, res) => apiHandler.UserGetAll(req, res));
-app.get("/user/:id", (req, res) => apiHandler.UserGetById(req, res));
+app.get("/user", (req, res) => apiHandler.UserGet(req, res));
 app.patch("/user/:id", (req, res) => apiHandler.UserPatch(req, res));
 app.delete("/user/:id", (req, res) => apiHandler.UserDelete(req, res));
 
