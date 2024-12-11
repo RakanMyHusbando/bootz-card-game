@@ -22,19 +22,16 @@ app.listen(process.env.PORT, () =>
 );
 
 // Card routes
-app.post("/card", (req, res) => apiHandler.CardPost(req, res));
-app.get("/card", (req, res) => apiHandler.CardGetAll(req, res));
-app.get("/card/:id", (req, res) => apiHandler.CardGetById(req, res));
-app.patch("/card/:id", (req, res) => apiHandler.CardPatch(req, res));
-app.delete("/card/:id", (req, res) => apiHandler.CardDelete(req, res));
-app.get("/cards/randomCard", (req, res) => apiHandler.GetRamdomCard(req, res));
+app.post("/card", (req, res) => apiHandler.GetCard(req, res));
+app.get("/card", (req, res) => apiHandler.GetCard(req, res));
+app.patch("/card/:id", (req, res) => apiHandler.PatchCard(req, res));
+app.delete("/card/:id", (req, res) => apiHandler.DeleteCard(req, res));
 
 // User routes
-app.post("/user", (req, res) => apiHandler.UserPost(req, res));
-app.get("/user", (req, res) => apiHandler.UserGetAll(req, res));
-app.get("/user/:id", (req, res) => apiHandler.UserGetById(req, res));
-app.patch("/user/:id", (req, res) => apiHandler.UserPatch(req, res));
-app.delete("/user/:id", (req, res) => apiHandler.UserDelete(req, res));
+app.post("/user", (req, res) => apiHandler.PostUser(req, res));
+app.get("/user", (req, res) => apiHandler.GetUser(req, res));
+app.patch("/user/:id", (req, res) => apiHandler.PatchUser(req, res));
+app.delete("/user/:id", (req, res) => apiHandler.DeleteUser(req, res));
 
 // User-Card routes
 app.post("/user/:userId/card/:cardId", (req, res) =>
@@ -42,6 +39,9 @@ app.post("/user/:userId/card/:cardId", (req, res) =>
 );
 app.post("/user/:userId/card", (req, res) =>
     apiHandler.UserCardPostUnkown(req, res),
+);
+app.post("/user/:userId/card/random", (req, res) =>
+    apiHandler.GetRamdomCard(req, res),
 );
 app.delete("/user/:userId/card/:cardId", (req, res) =>
     apiHandler.UserCardDelete(req, res),

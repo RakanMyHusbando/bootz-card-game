@@ -21,6 +21,23 @@ export class ApiHandler extends Storage {
         super(dbFile, timeout);
     }
 
+    /**
+     * Search for query parameters in the request object.
+     * @param {string[]} params - A list of expected query parameters.
+     * @param {Object} req - The request object.
+     */
+    #QueryParams(req, params) {
+        const where = {};
+        let found = false;
+        for (const key of params) {
+            if (req.query[key]) {
+                where[key] = req.query[key];
+                found = true;
+            }
+        }
+        return found ? where : null;
+    }
+
     /* -------------------------------------------- Card Handler -------------------------------------------- */
 
     #cardKeys = [
@@ -47,6 +64,14 @@ export class ApiHandler extends Storage {
     };
 
     /**
+     * @returns {Number}
+     */
+    #rarityFunction() {
+        // TODO
+        return 2;
+    }
+
+    /**
      * Handle POST request to create a new card.
      * @param {Object} req - The request object.
      * @param {Object} req.params - The request parameters.
@@ -60,9 +85,9 @@ export class ApiHandler extends Storage {
      * @param {number} req.body.defense - The defense value of the card.
      * @param {number} req.body.health - The health value of the card.
      * @param {Object} res - The response object.
-     * @returns {null}
+     * @returns {void}
      */
-    CardPost(req, res) {
+    PostCard(req, res) {
         const data = [];
         try {
             for (const key of this.#cardKeys) {
@@ -80,12 +105,16 @@ export class ApiHandler extends Storage {
      * Handle GET request to get all cards.
      * @param {Object} req - The request object.
      * @param {Object} res - The response object.
-     * @returns {null}
+     * @returns {void}
      */
-    CardGetAll(req, res) {
+    GetCard(req, res) {
         const data = [];
         try {
-            const rows = this.select("card", ["*"]);
+            const rows = this.select(
+                "card",
+                ["*"],
+                this.#QueryParams(req, this.#cardKeys),
+            );
             rows.forEach((row) => data.push(this.#StorageToRespData(row)));
             if (data.length === 0)
                 return formApiResponse(res, 404, null, "No cards found");
@@ -98,42 +127,8 @@ export class ApiHandler extends Storage {
     /**
      * Handle GET request to get a card by id.
      * @param {Object} req - The request object.
-     * @param {Object} req.params - The request parameters.
-     * @param {string} req.params.id - The id of the card.
      * @param {Object} res - The response object.
-     * @returns {null}
-     */
-    CardGetById(req, res) {
-        const data = [];
-        try {
-            const rows = this.select("card", ["*"], {
-                id: parseInt(req.params.id),
-            });
-            rows.forEach((storageData) =>
-                data.push(this.#StorageToRespData(storageData)),
-            );
-            if (data.length === 0)
-                return formApiResponse(res, 404, null, "No cards found");
-            formApiResponse(res, 200, data, "Card retrieved");
-        } catch (err) {
-            formApiResponse(res, 500, null, err);
-        }
-    }
-
-    /**
-     * 
-     * @returns {Number}
-     */
-    #rarityFunction() {
-        // TODO
-        return 2;
-    }
-
-    /**
-     * Handle GET request to get a card by id.
-     * @param {Object} req - The request object.
-     * @param {Object} res - The response object.
-     * @returns {null}
+     * @returns {void}
      */
     GetRamdomCard(req, res) {
         const data = [];
@@ -141,7 +136,11 @@ export class ApiHandler extends Storage {
             const rows = this.select("card", ["*"], {
                 rarity: this.#rarityFunction(),
             });
-            data.push(this.#StorageToRespData(rows[Math.floor(Math.random() * rows.length)]));
+            data.push(
+                this.#StorageToRespData(
+                    rows[Math.floor(Math.random() * rows.length)],
+                ),
+            );
             if (data.length === 0)
                 return formApiResponse(res, 404, null, "No cards found");
             formApiResponse(res, 200, data, "Cards retrieved");
@@ -164,9 +163,9 @@ export class ApiHandler extends Storage {
      * @param {number} [req.body.defense] - The defense value of the card.
      * @param {number} [req.body.health] - The health value of the card.
      * @param {Object} res - The response object.
-     * @returns {null}
+     * @returns {void}
      */
-    CardPatch(req, res) {
+    PatchCard(req, res) {
         const columns = [];
         const values = [];
         try {
@@ -190,9 +189,9 @@ export class ApiHandler extends Storage {
      * @param {Object} req.params - The request parameters.
      * @param {string} req.params.id - The id of the card.
      * @param {Object} res - The response object.
-     * @returns {null}
+     * @returns {void}
      */
-    CardDelete(req, res) {
+    DeleteCard(req, res) {
         try {
             this.delete("card", { id: parseInt(req.params.id) });
             formApiResponse(res, 200, data, "Card deleted");
@@ -211,9 +210,9 @@ export class ApiHandler extends Storage {
      * @param {string} req.body.name - The name of the user.
      * @param {string} req.body.discord_id - The discord id of the user.
      * @param {Object} res - The response object.
-     * @returns {null}
+     * @returns {void}
      */
-    UserPost(req, res) {
+    PostUser(req, res) {
         const data = [];
         try {
             for (const key of this.#userKeys) {
@@ -256,37 +255,19 @@ export class ApiHandler extends Storage {
      * Handle GET request to get all users.
      * @param {Object} req - The request object.
      * @param {Object} res - The response object.
-     * @returns {null}
+     * @returns {void}
      */
-    UserGetAll(req, res) {
+    GetUser(req, res) {
         try {
-            const rows = this.select("user", ["*"]);
+            const rows = this.select(
+                "user",
+                ["*"],
+                this.#QueryParams(req, this.#userKeys),
+            );
             if (rows.length > 0) {
                 for (let i = 0; i < rows.length; i++) {
-                    rows[i].cards = this.#UserCardGet(rows[i].id);
+                    rows[i].cards = this.#GetUserCard(rows[i].id);
                 }
-                formApiResponse(res, 200, rows, "User retrieved");
-            } else formApiResponse(res, 404, null, "No user found");
-        } catch (err) {
-            formApiResponse(res, 500, null, err);
-        }
-    }
-
-    /**
-     * Handle GET request to get a user by id.
-     * @param {Object} req - The request object.
-     * @param {Object} req.params - The request parameters.
-     * @param {string} req.params.id - The id of the user.
-     * @param {Object} res - The response object.
-     * @returns {null}
-     **/
-    UserGetById(req, res) {
-        try {
-            const rows = this.select("user", ["*"], {
-                id: parseInt(req.params.id),
-            });
-            if (rows.length == 1) {
-                rows[0].cards = this.#UserCardGet(parseInt(req.params.id));
                 formApiResponse(res, 200, rows, "User retrieved");
             } else formApiResponse(res, 404, null, "No user found");
         } catch (err) {
@@ -303,9 +284,9 @@ export class ApiHandler extends Storage {
      * @param {string} [req.body.name] - The name of the user.
      * @param {string} [req.body.discord_id] - The discord id of the user.
      * @param {Object} res - The response object.
-     * @returns {null}
+     * @returns {void}
      */
-    UserPatch(req, res) {
+    PatchUser(req, res) {
         const data = [];
         try {
             for (const key of this.#userKeys)
@@ -325,11 +306,11 @@ export class ApiHandler extends Storage {
      * @param {Object} req.params - The request parameters.
      * @param {string} req.params.id - The id of the user.
      * @param {Object} res - The response object.
-     * @returns {null}
+     * @returns {void}
      */
-    UserDelete(req, res) {
+    DeleteUser(req, res) {
         try {
-            this.#UserCardGet(req.params.id).forEach((card) =>
+            this.#GetUserCard(req.params.id).forEach((card) =>
                 this.delete("user_card", {
                     user_id: parseInt(req.params.id),
                     card_id: card.id,
@@ -351,11 +332,11 @@ export class ApiHandler extends Storage {
      * @param {string} req.params.userId - The id of the user.
      * @param {string} req.params.cardId - The id of the card.
      * @param {Object} res
-     * @returns {null}
+     * @returns {void}
      */
-    UserCardPost(req, res) {
+    PostUserCard(req, res) {
         try {
-            const userCards = this.#UserCardGet(
+            const userCards = this.#GetUserCard(
                 parseInt(req.params.userId),
                 parseInt(req.params.cardId),
             );
@@ -390,9 +371,9 @@ export class ApiHandler extends Storage {
      * @param {Object} req.params - The request parameters.
      * @param {string} req.params.userId - The id of the user.
      * @param {Object} res
-     * @returns {null}
+     * @returns {void}
      */
-    UserCardPostUnkown(req, res) {
+    PostUnkownUserCard(req, res) {
         try {
             this.updateQuery(
                 "UPDATE user SET unknown_card_amount = unknown_card_amount + 1 WHERE id = ?",
@@ -411,11 +392,11 @@ export class ApiHandler extends Storage {
      * @param {string} req.params.userId - The id of the user.
      * @param {Object} req.params.cardId - The id of the card.
      * @param {Object} res - The response object.
-     * @returns {null}
+     * @returns {void}
      */
-    UserCardDelete(req, res) {
+    DeleteUserCard(req, res) {
         try {
-            const userCards = this.#UserCardGet(
+            const userCards = this.#GetUserCard(
                 parseInt(req.params.userId),
                 parseInt(req.params.cardId),
             );
@@ -445,9 +426,9 @@ export class ApiHandler extends Storage {
      * @param {Object} req.params - The request parameters.
      * @param {string} req.params.userId - The id of the user.
      * @param {Object} res
-     * @returns {null}
+     * @returns {void}
      */
-    UserCardDeleteUnkown(req, res) {
+    DeleteUnknownUserCard(req, res) {
         try {
             this.updateQuery(
                 "UPDATE user SET unknown_card_amount = unknown_card_amount - 1 WHERE id = ?",
@@ -465,7 +446,7 @@ export class ApiHandler extends Storage {
      * @param {number} cardId - The id of the card.
      * @returns {Object[]} - Returns an array of user cards.
      */
-    #UserCardGet = (userId, cardId) => {
+    #GetUserCard = (userId, cardId) => {
         try {
             const select = ["own_amount"];
             const where = { user_id: userId };
