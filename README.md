@@ -58,11 +58,6 @@ Bootz card game is a web application that allows users to manage and play with c
     GET /card
     ```
 
-- **Get a card by ID**
-    ```http
-    GET /card/:id
-    ```
-
 - **Update a card by ID**
     ```http
     PATCH /card/:id
@@ -104,11 +99,6 @@ Bootz card game is a web application that allows users to manage and play with c
     GET /user
     ```
 
-- **Get a user by ID**
-    ```http
-    GET /user/:id
-    ```
-
 - **Update a user by ID**
     ```http
     PATCH /user/:id
@@ -146,4 +136,9 @@ Bootz card game is a web application that allows users to manage and play with c
 - **Remove a card from a user's collection**
     ```http
     DELETE /user/:userId/card/:cardId
+    ```
+
+- **Add unknown card to user**
+    ```http
+    PATCH /user/:userId/card/random
     ```
