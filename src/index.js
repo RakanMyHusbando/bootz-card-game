@@ -40,12 +40,12 @@ app.post("/user/:userId/card/:cardId", (req, res) =>
 app.post("/user/:userId/card", (req, res) =>
     apiHandler.UserCardPostUnkown(req, res),
 );
-app.post("/user/:userId/card/random", (req, res) =>
-    apiHandler.GetRamdomCard(req, res),
-);
 app.delete("/user/:userId/card/:cardId", (req, res) =>
     apiHandler.UserCardDelete(req, res),
 );
 app.delete("/user/:userId/card", (req, res) =>
     apiHandler.UserCardDeleteUnkown(req, res),
+);
+app.patch("/user/:userId/card/random", (req, res) =>
+    apiHandler.PatchRamdomCard(req, res),
 );
