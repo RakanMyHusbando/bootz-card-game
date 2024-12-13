@@ -9,8 +9,8 @@ Bootz card game is a web application that allows users to manage and play with c
 
 2. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/bootz-card-game.git
-    cd bootz-card-game
+    git clone https://github.com/yourusername/bootz-card-game.git  backend
+    cd backend
     ```
 
 3. Install dependencies:
