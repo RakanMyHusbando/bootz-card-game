@@ -10,23 +10,21 @@ Bootz card game is a web application that allows users to manage and play with c
 2. Clone the repository:
     ```sh
     git clone https://github.com/yourusername/bootz-card-game.git  backend
-    cd backend
     ```
-
-3. Install dependencies:
+3. Navigate to the project directory:
+   ```sh
+   cd backend
+   ```
+4. Install dependencies:
     ```sh
     npm install
     ```
-
-4. Create a `.env` file based on the `.env.example`:
+5. Create a `.env` file based on the `.env.example`:
     ```sh
     cp .env.example .env
     ```
-
-5. Update the `.env` file with your configuration
-
-
-6. Run the application:
+6. Update the `.env` file with your configuration
+7. Run the application:
     ```sh
     npm run start
     npm run dev # developer mode
