@@ -1,17 +1,34 @@
 import fs from "node:fs";
 import express from "express";
 import dotenv from "dotenv";
-import { Storage } from "./storage.js";
 import { ApiHandler } from "./api.js";
 
 dotenv.config();
 
-// executing schema.sql to create tables
-const db = new Storage(process.env.DB_FILE);
-db.executeSchema(fs.readFileSync("src/schema.sql").toString());
-db.close();
-
 const apiHandler = new ApiHandler(process.env.DB_FILE);
+apiHandler.executeSchema(fs.readFileSync("src/schema.sql").toString());
+
+const types = ["player", "staffmember", "champion", "skin"];
+const rarities = [
+    { name: "common", chance: 60 },
+    { name: "rare", chance: 25 },
+    { name: "epic", chance: 10 },
+    { name: "legendary", chance: 4 },
+    { name: "mythic", chance: 1 },
+];
+
+for (const type of types) {
+    apiHandler.insert("type", ["name"], [type]);
+}
+
+for (const rarity of rarities) {
+    apiHandler.insert(
+        "rarity",
+        ["name", "chance"],
+        [rarity.name, rarity.chance],
+    );
+}
+
 const app = express();
 
 app.use(express.urlencoded({ extended: true }));
@@ -22,7 +39,7 @@ app.listen(process.env.PORT, () =>
 );
 
 // Card routes
-app.post("/card", (req, res) => apiHandler.GetCard(req, res));
+app.post("/card", (req, res) => apiHandler.PostCard(req, res));
 app.get("/card", (req, res) => apiHandler.GetCard(req, res));
 app.patch("/card/:id", (req, res) => apiHandler.PatchCard(req, res));
 app.delete("/card/:id", (req, res) => apiHandler.DeleteCard(req, res));
@@ -35,16 +52,16 @@ app.delete("/user/:id", (req, res) => apiHandler.DeleteUser(req, res));
 
 // User-Card routes
 app.post("/user/:userId/card/:cardId", (req, res) =>
-    apiHandler.UserCardPost(req, res),
+    apiHandler.PostUserCard(req, res),
 );
 app.post("/user/:userId/card", (req, res) =>
-    apiHandler.UserCardPostUnkown(req, res),
+    apiHandler.PostUnkownUserCard(req, res),
 );
 app.delete("/user/:userId/card/:cardId", (req, res) =>
-    apiHandler.UserCardDelete(req, res),
+    apiHandler.DeleteUserCard(req, res),
 );
 app.delete("/user/:userId/card", (req, res) =>
-    apiHandler.UserCardDeleteUnkown(req, res),
+    apiHandler.DeleteUnknownUserCard(req, res),
 );
 app.patch("/user/:userId/card/random", (req, res) =>
     apiHandler.PatchRamdomCard(req, res),

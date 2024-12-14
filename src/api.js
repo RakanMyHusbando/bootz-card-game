@@ -40,36 +40,7 @@ export class ApiHandler extends Storage {
 
     /* -------------------------------------------- Card Handler -------------------------------------------- */
 
-    #cardKeys = [
-        "title",
-        "description",
-        "type",
-        "rarity",
-        "attack",
-        "defense",
-        "health",
-    ];
-
-    #StorageToRespData = (storageData) => {
-        return {
-            id: storageData.id,
-            title: storageData.title,
-            description: storageData.description,
-            type: storageData.type,
-            rarity: storageData.rarity,
-            attack: storageData.attack,
-            defense: storageData.defense,
-            health: storageData.health,
-        };
-    };
-
-    /**
-     * @returns {Number}
-     */
-    #rarityFunction() {
-        // TODO
-        return 2;
-    }
+    #cardKeys = ["name", "type_id", "rarity_id"];
 
     /**
      * Handle POST request to create a new card.
@@ -88,13 +59,22 @@ export class ApiHandler extends Storage {
      * @returns {void}
      */
     PostCard(req, res) {
-        const data = [];
+        const columns = [];
+        const values = [];
         try {
-            for (const key of this.#cardKeys) {
-                if (!req.body[key]) throw new Error("Missing required fields");
-                data.push(req.body[key]);
+            for (const elem of this.#cardKeys) {
+                let key = elem;
+                let value = req.body[key];
+                if (elem.includes("_id")) {
+                    key = elem.replace("_id", "");
+                    value = this.select(key, ["id"], { name: req.body[key] })[0]
+                        .id;
+                }
+                if (!value) throw new Error("Missing required fields");
+                values.push(value);
+                columns.push(elem);
             }
-            this.insert("card", this.#cardKeys, data);
+            this.insert("card", columns, values);
             formApiResponse(res, 200, null, "Card created");
         } catch (err) {
             return formApiResponse(res, 500, null, err);
@@ -115,7 +95,20 @@ export class ApiHandler extends Storage {
                 ["*"],
                 this.#QueryParams(req, this.#cardKeys),
             );
-            rows.forEach((row) => data.push(this.#StorageToRespData(row)));
+            rows.forEach((row) => {
+                console.log(row);
+                const rowResp = {
+                    rarity: this.select("rarity", ["name"], {
+                        id: row.rarity_id,
+                    })[0].name,
+                    type: this.select("type", ["name"], {
+                        id: row.rarity_id,
+                    })[0].name,
+                };
+                for (const key of this.#cardKeys)
+                    if (!key.includes("_id")) rowResp[key] = row[key];
+                data.push(rowResp);
+            });
             if (data.length === 0)
                 return formApiResponse(res, 404, null, "No cards found");
             formApiResponse(res, 200, data, "Card retrieved");
@@ -144,11 +137,18 @@ export class ApiHandler extends Storage {
         const columns = [];
         const values = [];
         try {
-            for (const key of this.#cardKeys)
-                if (req.body[key]) {
-                    values.push(req.body[key]);
+            for (const elem of this.#cardKeys) {
+                let key = elem;
+                let value = req.body[key];
+                if (elem.includes("_id")) {
+                    key = elem.replace("_id", "");
+                    value = this.select(key, ["id"], { name: req.body[key] });
+                }
+                if (value) {
+                    values.push(value);
                     columns.push(key);
                 }
+            }
             this.update("card", columns, values, {
                 id: parseInt(req.params.id),
             });
@@ -174,6 +174,7 @@ export class ApiHandler extends Storage {
             formApiResponse(res, 500, null, err);
         }
     }
+
     /* -------------------------------------------- User Handler -------------------------------------------- */
 
     #userKeys = ["name", "discord_id"];
@@ -195,11 +196,7 @@ export class ApiHandler extends Storage {
                 data.push(req.body[key]);
             }
             data.push(0);
-            this.insert(
-                "user",
-                this.#userKeys.concat("unknown_card_amount"),
-                data,
-            );
+            this.insert("user", this.#userKeys.concat("packs"), data);
             formApiResponse(res, 200, null, "User created");
         } catch (err) {
             if (
@@ -315,10 +312,9 @@ export class ApiHandler extends Storage {
                 parseInt(req.params.userId),
                 parseInt(req.params.cardId),
             );
-            const amount =
-                userCards.length > 0 ? userCards[0].own_amount : null;
+            const amount = userCards.length > 0 ? userCards[0].owned : null;
             if (amount) {
-                this.update("user_card", ["own_amount"], [amount + 1], {
+                this.update("user_card", ["owned"], [amount + 1], {
                     user_id: parseInt(req.params.userId),
                     card_id: parseInt(req.params.cardId),
                 });
@@ -326,7 +322,7 @@ export class ApiHandler extends Storage {
             } else {
                 this.insert(
                     "user_card",
-                    ["user_id", "card_id", "own_amount"],
+                    ["user_id", "card_id", "owned"],
                     [
                         parseInt(req.params.userId),
                         parseInt(req.params.cardId),
@@ -375,10 +371,9 @@ export class ApiHandler extends Storage {
                 parseInt(req.params.userId),
                 parseInt(req.params.cardId),
             );
-            const amount =
-                userCards.length > 0 ? userCards[0].own_amount : null;
+            const amount = userCards.length > 0 ? userCards[0].owned : null;
             if (amount) {
-                this.update("user_card", ["own_amount"], [amount - 1], {
+                this.update("user_card", ["owned"], [amount - 1], {
                     user_id: parseInt(req.params.userId),
                     card_id: parseInt(req.params.cardId),
                 });
@@ -422,7 +417,6 @@ export class ApiHandler extends Storage {
      * @returns {void}
      */
     PatchRamdomCard(req, res) {
-        const data = [];
         try {
             const unknownCardAmount = this.select(
                 "user",
@@ -433,13 +427,22 @@ export class ApiHandler extends Storage {
             )[0].unknown_card_amount;
             if (unknownCardAmount > 0) {
                 const rows = this.select("card", ["*"], {
-                    rarity: this.#rarityFunction(),
+                    rarity: 2, // TODO
                 });
-                data.push(
-                    this.#StorageToRespData(
-                        rows[Math.floor(Math.random() * rows.length)],
-                    ),
-                );
+                const card = rows[Math.floor(Math.random() * rows.length)];
+                const data = [
+                    {
+                        card_id: card.id,
+                        name: card.name,
+                        description: card.description,
+                        type: this.select("type", ["name"], {
+                            id: card.type_id,
+                        })[0].name,
+                        rarity: this.select("rarity", ["name"], {
+                            id: card.rarity_id,
+                        })[0].name,
+                    },
+                ];
                 formApiResponse(res, 200, data, "Cards retrieved");
             } else {
                 formApiResponse(res, 500, null, "No Card left to pull");
@@ -457,7 +460,7 @@ export class ApiHandler extends Storage {
      */
     #GetUserCard = (userId, cardId) => {
         try {
-            const select = ["own_amount"];
+            const select = ["owned"];
             const where = { user_id: userId };
 
             if (cardId) where.card_id = cardId;
