@@ -39,7 +39,8 @@ server.setTimeout(3000);
 
 // Home route
 app.get("/", (req, res) => {
-    res.send(marked(fs.readFileSync("README.md").toString()));
+    const readme = fs.readFileSync("README.md").toString();
+    res.send(marked(readme.substring(readme.indexOf("## API Endpoints"))));
 });
 
 // Card routes
