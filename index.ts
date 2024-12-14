@@ -1,4 +1,4 @@
-import random from "./random.json";
+import random from "./random-card.json";
 
 interface User {
     id: number | null;
@@ -9,14 +9,9 @@ interface User {
 
 interface Card {
     id: number | null;
-    title: string;
-    description: string;
+    name: string;
     type: string;
-    rarity: number;
-    cost: number;
-    attack: number;
-    defense: number;
-    health: number;
+    rarity: string;
 }
 
 function ranInt(min: number, max: number): number {
@@ -28,17 +23,12 @@ function ranInt(min: number, max: number): number {
 const addContent = async (): Promise<void> => {
     // post 100 cards
     let j = 0;
-    for (let i = 0; i < random.names.length; i++) {
+    for (let i = 0; i < random.length; i++) {
         const card: Card = {
             id: null,
-            title: random.names[i],
-            description: random.descriptions[i],
-            type: random.types[j],
-            rarity: ranInt(1, 10),
-            cost: ranInt(1, 100),
-            attack: ranInt(1, 100),
-            defense: ranInt(1, 100),
-            health: ranInt(1, 1000),
+            name: random[i].name,
+            type: random[i].type,
+            rarity: random[i].rarity,
         };
         await fetch("http://localhost:5000/card", {
             method: "POST",
@@ -46,7 +36,10 @@ const addContent = async (): Promise<void> => {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(card),
-        });
+        })
+            .then((res) => res.json())
+            .then((res) => console.log(res))
+            .catch((err) => console.log(err));
         j === 9 ? (j = 0) : j++;
     }
     // post 100 users
@@ -63,7 +56,10 @@ const addContent = async (): Promise<void> => {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(user),
-        });
+        })
+            .then((res) => res.json())
+            .then((res) => console.log(res))
+            .catch((err) => console.log(err));
     }
 };
 
@@ -86,4 +82,6 @@ const addUserCard = async (): Promise<void> => {
     }
 };
 
-addContent().then(() => addUserCard());
+addContent()
+    .then(() => addUserCard())
+    .catch((err) => console.log(err));
