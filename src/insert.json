@@ -1,0 +1,21 @@
+[
+    {
+        "table": "type",
+        "values": [
+            { "name": "player" },
+            { "name": "staffmember" },
+            { "name": "champion" },
+            { "name": "skin" }
+        ]
+    },
+    {
+        "table": "rarity",
+        "values": [
+            { "name": "common", "chance": 60 },
+            { "name": "rare", "chance": 25 },
+            { "name": "epic", "chance": 10 },
+            { "name": "legendary", "chance": 4 },
+            { "name": "mythic", "chance": 1 }
+        ]
+    }
+]

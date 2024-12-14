@@ -7,8 +7,7 @@ const formApiResponse = (res, status, data, message) => {
         data: data,
         message: message.toString(),
     };
-    res.status(status);
-    res.json(body);
+    res.json(body).status(status).send("Message sent");
 };
 
 export class ApiHandler extends Storage {

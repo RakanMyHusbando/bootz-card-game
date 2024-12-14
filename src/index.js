@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import express from "express";
 import dotenv from "dotenv";
+import { marked } from "marked";
 import { ApiHandler } from "./api.js";
 
 dotenv.config();
@@ -8,25 +9,21 @@ dotenv.config();
 const apiHandler = new ApiHandler(process.env.DB_FILE);
 apiHandler.executeSchema(fs.readFileSync("src/schema.sql").toString());
 
-const types = ["player", "staffmember", "champion", "skin"];
-const rarities = [
-    { name: "common", chance: 60 },
-    { name: "rare", chance: 25 },
-    { name: "epic", chance: 10 },
-    { name: "legendary", chance: 4 },
-    { name: "mythic", chance: 1 },
-];
-
-for (const type of types) {
-    apiHandler.insert("type", ["name"], [type]);
-}
-
-for (const rarity of rarities) {
-    apiHandler.insert(
-        "rarity",
-        ["name", "chance"],
-        [rarity.name, rarity.chance],
-    );
+try {
+    const data = fs.readFileSync("./src/insert.json");
+    for (const elem of JSON.parse(data)) {
+        for (const row of elem.values) {
+            const columns = [];
+            const values = [];
+            for (const key in row) {
+                columns.push(key);
+                values.push(row[key]);
+                apiHandler.insert(elem.table, columns, values);
+            }
+        }
+    }
+} catch (err) {
+    console.error(err);
 }
 
 const app = express();
@@ -34,9 +31,16 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.listen(process.env.PORT, () =>
+const server = app.listen(process.env.PORT, () =>
     console.log(`Server running on  http://127.0.0.1:${process.env.PORT}`),
 );
+
+server.setTimeout(3000);
+
+// Home route
+app.get("/", (req, res) => {
+    res.send(marked(fs.readFileSync("README.md").toString()));
+});
 
 // Card routes
 app.post("/card", (req, res) => apiHandler.PostCard(req, res));
@@ -57,12 +61,12 @@ app.post("/user/:userId/card/:cardId", (req, res) =>
 app.post("/user/:userId/card", (req, res) =>
     apiHandler.PostUnkownUserCard(req, res),
 );
+app.patch("/user/:userId/card/random", (req, res) =>
+    apiHandler.PatchRamdomCard(req, res),
+);
 app.delete("/user/:userId/card/:cardId", (req, res) =>
     apiHandler.DeleteUserCard(req, res),
 );
 app.delete("/user/:userId/card", (req, res) =>
     apiHandler.DeleteUnknownUserCard(req, res),
-);
-app.patch("/user/:userId/card/random", (req, res) =>
-    apiHandler.PatchRamdomCard(req, res),
 );
