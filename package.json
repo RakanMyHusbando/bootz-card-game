@@ -1,0 +1,14 @@
+{
+    "name": "test-data",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "clean": "rm -rf index.js",
+        "build": "tsc --build",
+        "start": "npm run clean && npm run build && node index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": ""
+}

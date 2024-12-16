@@ -68,9 +68,10 @@ const addUserCard = () => __awaiter(void 0, void 0, void 0, function* () {
         .then((res) => res.json())
         .then((res) => res.data);
     // post 100 user cards
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 1000; i++) {
         const ranUserId = yield users[ranInt(0, (yield users.length) - 1)].id;
         const ranCardId = yield cards[ranInt(0, (yield cards.length) - 1)].id;
+        console.log(`http://localhost:5000/user/${ranUserId}/card/${ranCardId}`);
         yield fetch(`http://localhost:5000/user/${ranUserId}/card/${ranCardId}`, { method: "POST" });
     }
 });

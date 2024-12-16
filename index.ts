@@ -72,9 +72,12 @@ const addUserCard = async (): Promise<void> => {
         .then((res) => res.data);
 
     // post 100 user cards
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 1000; i++) {
         const ranUserId = await users[ranInt(0, (await users.length) - 1)].id;
         const ranCardId = await cards[ranInt(0, (await cards.length) - 1)].id;
+        console.log(
+            `http://localhost:5000/user/${ranUserId}/card/${ranCardId}`,
+        );
         await fetch(
             `http://localhost:5000/user/${ranUserId}/card/${ranCardId}`,
             { method: "POST" },

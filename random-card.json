@@ -15,11 +15,11 @@
     { "type": "champion", "name": "Zed", "rarity": "rare" },
     { "type": "champion", "name": "Jinx", "rarity": "common" },
     { "type": "champion", "name": "Ashe", "rarity": "common" },
-    { "type": "champion", "name": "Lee Sin", "rarity": "rare" },
+    { "type": "champion", "name": "Lee_Sin", "rarity": "rare" },
     { "type": "champion", "name": "Vayne", "rarity": "common" },
     { "type": "champion", "name": "Diana", "rarity": "rare" },
     { "type": "champion", "name": "Ezreal", "rarity": "common" },
-    { "type": "skin", "name": "Project:Yasuo", "rarity": "rare" },
+    { "type": "skin", "name": "Project_Yasuo", "rarity": "rare" },
     { "type": "skin", "name": "SpiritBlossomAhri", "rarity": "legendary" },
     { "type": "skin", "name": "BattleAcademiaLux", "rarity": "epic" },
     { "type": "skin", "name": "DarkStarThresh", "rarity": "epic" },
@@ -28,5 +28,5 @@
     { "type": "skin", "name": "BloodMoonAkali", "rarity": "epic" },
     { "type": "skin", "name": "PulsefireCaitlyn", "rarity": "rare" },
     { "type": "skin", "name": "OdysseyKayn", "rarity": "epic" },
-    { "type": "skin", "name": "K/DAAllOutEvelynn", "rarity": "legendary" }
+    { "type": "skin", "name": "K_DAAllOutEvelynn", "rarity": "legendary" }
 ]
