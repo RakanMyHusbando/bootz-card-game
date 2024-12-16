@@ -44,10 +44,6 @@ Bootz card game is a web application that allows users to manage and play with c
         "title": "Card Title",
         "description": "Card Description",
         "type": "Card Type",
-        "rarity": 1,
-        "attack": 10,
-        "defense": 5,
-        "health": 20
     }
     ```
 
@@ -66,10 +62,6 @@ Bootz card game is a web application that allows users to manage and play with c
         "title": "Updated Title",
         "description": "Updated Description",
         "type": "Updated Type",
-        "rarity": 2,
-        "attack": 15,
-        "defense": 10,
-        "health": 25
     }
     ```
 
@@ -116,16 +108,6 @@ Bootz card game is a web application that allows users to manage and play with c
 
 ### User-Card Endpoints
 
-- **Add a unknown card to a user's collection**
-    ```http
-    POST /user/:userId/card
-    ```
-
-- **Remove a unknown card from a user's collection**
-    ```http
-    DELETE /user/:userId/card
-    ```
-
 - **Add a card to a user's collection**
     ```http
     POST /user/:userId/card/:cardId
@@ -138,5 +120,17 @@ Bootz card game is a web application that allows users to manage and play with c
 
 - **Add unknown card to user**
     ```http
-    PATCH /user/:userId/card/random
+    POST /user/:userId/card/random
+    ```
+
+### User-Packs Endpoints
+
+- **Add a pack to user**
+    ```http
+    PATCH /user/:userId/pack/add
+    ```
+
+- **Open a pack**
+    ```http
+    PATCH /user/:userId/pack/open
     ```

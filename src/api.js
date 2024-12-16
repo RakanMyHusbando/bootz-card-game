@@ -398,14 +398,14 @@ export class ApiHandler extends Storage {
     };
 
     /**
-     * Handle POST request to add a Card-Pack to user.
+     * Handle PATCH request to add a Card-Pack to user.
      * @param {Object} req - The request object.
      * @param {Object} req.params - The request parameters.
      * @param {string} req.params.userId - The id of the user.
      * @param {Object} res - The response object.
      * @returns {void}
      */
-    PostUserPack(req, res) {
+    PatchUserPackAdd(req, res) {
         try {
             const userPacks = this.select("user", ["packs"], {
                 id: parseInt(req.params.userId),
@@ -427,67 +427,67 @@ export class ApiHandler extends Storage {
      * @param {Object} res - The response object.
      * @returns {void}
      */
-    PatchUserPack(req, res) {
+    PatchUserPackOpen(req, res) {
         const data = [];
         try {
             const userPacks = this.select("user", ["packs"], {
                 id: parseInt(req.params.userId),
             })[0].packs;
-            if (userPacks && userPacks > 0) {
-                const cardRaritys = this.select("rarity", ["*"]).sort(
-                    (x, y) => x.chance - y.chance,
-                );
-                const randAmount =
-                    Math.floor(
-                        Math.random() *
-                            (this.#packCardAmount.max -
-                                this.#packCardAmount.min +
-                                1),
-                    ) + this.#packCardAmount.min;
-                for (let i = 0; i < randAmount; i++) {
-                    const randRarity = Math.floor(Math.random() * 100);
-                    for (let j = 0; j < cardRaritys.length; j++) {
-                        if (
-                            j == cardRaritys.length - 1 ||
-                            Math.abs(cardRaritys[j].chance - randRarity) <
-                                Math.abs(cardRaritys[j + 1].chance - randRarity)
-                        ) {
-                            const cards = this.select("card", ["*"], {
-                                rarity_id: cardRaritys[j].id,
-                            });
-                            data.push(
-                                cards[Math.floor(Math.random() * cards.length)],
-                            );
-                        }
+            if (!(userPacks && userPacks > 0)) {
+                formApiResponse(res, 424, null, "User has no packs");
+                return;
+            }
+            const cardRaritys = this.select("rarity", ["*"]).sort(
+                (x, y) => x.chance - y.chance,
+            );
+            const randAmount =
+                Math.floor(
+                    Math.random() *
+                        (this.#packCardAmount.max -
+                            this.#packCardAmount.min +
+                            1),
+                ) + this.#packCardAmount.min;
+            for (let i = 0; i < randAmount; i++) {
+                const randRarity = Math.floor(Math.random() * 100);
+                for (let j = 0; j < cardRaritys.length; j++) {
+                    if (
+                        j == cardRaritys.length - 1 ||
+                        Math.abs(cardRaritys[j].chance - randRarity) <
+                            Math.abs(cardRaritys[j + 1].chance - randRarity)
+                    ) {
+                        const cards = this.select("card", ["*"], {
+                            rarity_id: cardRaritys[j].id,
+                        });
+                        data.push(
+                            cards[Math.floor(Math.random() * cards.length)],
+                        );
                     }
                 }
-                this.update("user", ["packs"], [userPacks - 1]);
-                for (const elem of data) {
-                    const userCard = this.#GetUserCard(
-                        parseInt(req.params.userId),
-                        elem.id,
-                    );
-                    if (userCard.length > 0)
-                        this.update(
-                            "user_card",
-                            ["user_id", "card_id", "owned"],
-                            [
-                                parseInt(req.params.userId),
-                                elem.id,
-                                userCard[0].owned + 1,
-                            ],
-                        );
-                    else
-                        this.insert(
-                            "user_card",
-                            ["user_id", "card_id", "owned"],
-                            [parseInt(req.params.userId), elem.id, 1],
-                        );
-                }
-                formApiResponse(res, 200, data, "User pack opened");
-            } else {
-                formApiResponse(res, 424, null, "User has no packs");
             }
+            this.update("user", ["packs"], [userPacks - 1]);
+            for (const elem of data) {
+                const userCard = this.#GetUserCard(
+                    parseInt(req.params.userId),
+                    elem.id,
+                );
+                if (userCard.length > 0)
+                    this.update(
+                        "user_card",
+                        ["user_id", "card_id", "owned"],
+                        [
+                            parseInt(req.params.userId),
+                            elem.id,
+                            userCard[0].owned + 1,
+                        ],
+                    );
+                else
+                    this.insert(
+                        "user_card",
+                        ["user_id", "card_id", "owned"],
+                        [parseInt(req.params.userId), elem.id, 1],
+                    );
+            }
+            formApiResponse(res, 200, data, "User pack opened");
         } catch (err) {
             formApiResponse(res, 500, null, err);
         }

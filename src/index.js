@@ -59,17 +59,14 @@ app.delete("/user/:id", (req, res) => apiHandler.DeleteUser(req, res));
 app.post("/user/:userId/card/:cardId", (req, res) =>
     apiHandler.PostUserCard(req, res),
 );
-app.patch("/user/:userId/card/random", (req, res) =>
-    apiHandler.PatchRamdomCard(req, res),
-);
 app.delete("/user/:userId/card/:cardId", (req, res) =>
     apiHandler.DeleteUserCard(req, res),
 );
 
 // User-Pack routes
-app.post("/user/:userId/packs", (req, res) =>
-    apiHandler.PostUserPack(req, res),
+app.patch("/user/:userId/packs/add", (req, res) =>
+    apiHandler.PatchUserPackAdd(req, res),
 );
-app.patch("/user/:userId/packs", (req, res) =>
-    apiHandler.PatchUserPack(req, res),
+app.patch("/user/:userId/packs/open", (req, res) =>
+    apiHandler.PatchUserPackOpen(req, res),
 );
