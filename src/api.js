@@ -7,7 +7,7 @@ const formApiResponse = (res, status, data, message) => {
         data: data,
         message: message.toString(),
     };
-    res.json(body).status(status).send("Message sent");
+    res.json(body).status(status);
 };
 
 export class ApiHandler extends Storage {
@@ -95,13 +95,13 @@ export class ApiHandler extends Storage {
                 this.#QueryParams(req, this.#cardKeys),
             );
             rows.forEach((row) => {
-                console.log(row);
                 const rowResp = {
+                    id: row.id,
                     rarity: this.select("rarity", ["name"], {
                         id: row.rarity_id,
                     })[0].name,
                     type: this.select("type", ["name"], {
-                        id: row.rarity_id,
+                        id: row.type_id,
                     })[0].name,
                 };
                 for (const key of this.#cardKeys)
@@ -109,8 +109,8 @@ export class ApiHandler extends Storage {
                 data.push(rowResp);
             });
             if (data.length === 0)
-                return formApiResponse(res, 404, null, "No cards found");
-            formApiResponse(res, 200, data, "Card retrieved");
+                formApiResponse(res, 404, null, "No cards found");
+            else formApiResponse(res, 200, data, "Card retrieved");
         } catch (err) {
             formApiResponse(res, 500, null, err);
         }
@@ -336,26 +336,6 @@ export class ApiHandler extends Storage {
     }
 
     /**
-     * Handle POST request to add a unknown card to a user's collection.
-     * @param {Object} req - The request object.
-     * @param {Object} req.params - The request parameters.
-     * @param {string} req.params.userId - The id of the user.
-     * @param {Object} res
-     * @returns {void}
-     */
-    PostUnkownUserCard(req, res) {
-        try {
-            this.updateQuery(
-                "UPDATE user SET unknown_card_amount = unknown_card_amount + 1 WHERE id = ?",
-                [parseInt(req.params.userId)],
-            );
-            formApiResponse(res, 200, null, "Added 1 unknown card");
-        } catch (err) {
-            formApiResponse(res, 500, null, err);
-        }
-    }
-
-    /**
      * Handle DELETE request to delete a card from a user.
      * @param {Object} req - The request object.
      * @param {Object} req.params - The request parameters.
@@ -383,68 +363,6 @@ export class ApiHandler extends Storage {
                     card_id: parseInt(req.params.cardId),
                 });
                 formApiResponse(res, 200, null, "User card deleted");
-            }
-        } catch (err) {
-            formApiResponse(res, 500, null, err);
-        }
-    }
-
-    /**
-     * Handle DELETE request to to delete a unknown card from a user.
-     * @param {Object} req - The request object.
-     * @param {Object} req.params - The request parameters.
-     * @param {string} req.params.userId - The id of the user.
-     * @param {Object} res
-     * @returns {void}
-     */
-    DeleteUnknownUserCard(req, res) {
-        try {
-            this.updateQuery(
-                "UPDATE user SET unknown_card_amount = unknown_card_amount - 1 WHERE id = ?",
-                [parseInt(req.params.userId)],
-            );
-            formApiResponse(res, 200, null, "Subtracted 1 unknown card");
-        } catch (err) {
-            formApiResponse(res, 500, null, err);
-        }
-    }
-
-    /**
-     * Handle GET request to get a card by id.
-     * @param {Object} req - The request object.
-     * @param {Object} res - The response object.
-     * @returns {void}
-     */
-    PatchRamdomCard(req, res) {
-        try {
-            const unknownCardAmount = this.select(
-                "user",
-                ["unknown_card_amount"],
-                {
-                    id: req.params.userId,
-                },
-            )[0].unknown_card_amount;
-            if (unknownCardAmount > 0) {
-                const rows = this.select("card", ["*"], {
-                    rarity: 2, // TODO
-                });
-                const card = rows[Math.floor(Math.random() * rows.length)];
-                const data = [
-                    {
-                        card_id: card.id,
-                        name: card.name,
-                        description: card.description,
-                        type: this.select("type", ["name"], {
-                            id: card.type_id,
-                        })[0].name,
-                        rarity: this.select("rarity", ["name"], {
-                            id: card.rarity_id,
-                        })[0].name,
-                    },
-                ];
-                formApiResponse(res, 200, data, "Cards retrieved");
-            } else {
-                formApiResponse(res, 500, null, "No Card left to pull");
             }
         } catch (err) {
             formApiResponse(res, 500, null, err);

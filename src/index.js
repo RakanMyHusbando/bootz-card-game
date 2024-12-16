@@ -7,23 +7,23 @@ import { ApiHandler } from "./api.js";
 dotenv.config();
 
 const apiHandler = new ApiHandler(process.env.DB_FILE);
+
 apiHandler.executeSchema(fs.readFileSync("src/schema.sql").toString());
 
-try {
-    const data = fs.readFileSync("./src/insert.json");
-    for (const elem of JSON.parse(data)) {
-        for (const row of elem.values) {
-            const columns = [];
-            const values = [];
-            for (const key in row) {
-                columns.push(key);
-                values.push(row[key]);
-                apiHandler.insert(elem.table, columns, values);
-            }
+const data = fs.readFileSync("./src/insert.json");
+for (const elem of JSON.parse(data)) {
+    for (const row of elem.values) {
+        const columns = [];
+        const values = [];
+        for (const key in row) {
+            columns.push(key);
+            values.push(row[key]);
         }
+        if (
+            apiHandler.select(elem.table, ["*"], { name: row.name }).length == 0
+        )
+            apiHandler.insert(elem.table, columns, values);
     }
-} catch (err) {
-    console.error(err);
 }
 
 const app = express();
@@ -59,15 +59,13 @@ app.delete("/user/:id", (req, res) => apiHandler.DeleteUser(req, res));
 app.post("/user/:userId/card/:cardId", (req, res) =>
     apiHandler.PostUserCard(req, res),
 );
-app.post("/user/:userId/card", (req, res) =>
-    apiHandler.PostUnkownUserCard(req, res),
-);
 app.patch("/user/:userId/card/random", (req, res) =>
     apiHandler.PatchRamdomCard(req, res),
 );
 app.delete("/user/:userId/card/:cardId", (req, res) =>
     apiHandler.DeleteUserCard(req, res),
 );
-app.delete("/user/:userId/card", (req, res) =>
-    apiHandler.DeleteUnknownUserCard(req, res),
-);
+
+// User-Pack routes
+// app.post("/user/:userId/pack", (req, res) => apiHandler.PostPack(req, res));
+// app.patch("/user/:userId/pack", (req, res) => apiHandler.PatchPack(req, res));
