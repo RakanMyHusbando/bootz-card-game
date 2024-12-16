@@ -67,5 +67,9 @@ app.delete("/user/:userId/card/:cardId", (req, res) =>
 );
 
 // User-Pack routes
-// app.post("/user/:userId/pack", (req, res) => apiHandler.PostPack(req, res));
-// app.patch("/user/:userId/pack", (req, res) => apiHandler.PatchPack(req, res));
+app.post("/user/:userId/packs", (req, res) =>
+    apiHandler.PostUserPack(req, res),
+);
+app.patch("/user/:userId/packs", (req, res) =>
+    apiHandler.PatchUserPack(req, res),
+);
