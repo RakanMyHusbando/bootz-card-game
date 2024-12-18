@@ -76,5 +76,5 @@ const addUserCard = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 addContent()
-    .then(() => addUserCard())
+    // .then(() => addUserCard())
     .catch((err) => console.log(err));
