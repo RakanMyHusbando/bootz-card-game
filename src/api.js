@@ -2,6 +2,8 @@ import { Storage } from "./storage.js";
 
 const formApiResponse = (res, status, data, message) => {
     console.log(message);
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Access-Control-Allow-Origin", "*");
     const body = {
         status: status,
         data: data,
@@ -447,6 +449,7 @@ export class ApiHandler extends Storage {
                             this.#packCardAmount.min +
                             1),
                 ) + this.#packCardAmount.min;
+            console.log(randAmount);
             for (let i = 0; i < randAmount; i++) {
                 const randRarity = Math.floor(Math.random() * 100);
                 for (let j = 0; j < cardRaritys.length; j++) {
@@ -461,9 +464,11 @@ export class ApiHandler extends Storage {
                         data.push(
                             cards[Math.floor(Math.random() * cards.length)],
                         );
+                        break;
                     }
                 }
             }
+            console.log(data);
             this.update("user", ["packs"], [userPacks - 1]);
             for (const elem of data) {
                 const userCard = this.#GetUserCard(

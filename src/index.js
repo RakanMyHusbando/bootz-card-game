@@ -35,8 +35,6 @@ const server = app.listen(process.env.PORT, () =>
     console.log(`Server running on  http://127.0.0.1:${process.env.PORT}`),
 );
 
-server.setTimeout(3000);
-
 // Home route
 app.get("/", (req, res) => {
     const readme = fs.readFileSync("README.md").toString();
